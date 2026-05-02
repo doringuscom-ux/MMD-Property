@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import PropertyCard from '../components/PropertyCard';
 import Footer from '../components/Footer';
@@ -15,8 +15,25 @@ import { BASE_URL } from '../api';
 function Home() {
   const [activeTab, setActiveTab] = useState('Buy');
   const [searchQuery, setSearchQuery] = useState('');
+  const [propertyType, setPropertyType] = useState('All Types');
+  const [budget, setBudget] = useState('Any Budget');
   const [scrolled, setScrolled] = useState(false);
   const [hoveredStat, setHoveredStat] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('search', searchQuery);
+    if (activeTab && activeTab !== 'Buy') params.append('category', activeTab);
+    if (propertyType !== 'All Types') params.append('type', propertyType);
+    
+    // Budget handling (simple mapping for now)
+    if (budget !== 'Any Budget') {
+        params.append('budget', budget);
+    }
+
+    navigate(`/properties?${params.toString()}`);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -25,17 +42,34 @@ function Home() {
   }, []);
 
   const [featuredProperties, setFeaturedProperties] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchInitialData = async () => {
       try {
+        // Fetch properties
         const response = await fetch(`${BASE_URL}/properties`);
         const data = await response.json();
         const propertiesList = data.properties || [];
+
+        // Fetch wishlist if logged in
+        let currentWishlist = [];
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (userInfo) {
+          const wishRes = await fetch(`${BASE_URL}/users/wishlist`, {
+            headers: { 'Authorization': `Bearer ${userInfo.token}` }
+          });
+          const wishData = await wishRes.json();
+          if (wishRes.ok) {
+            currentWishlist = wishData.map(p => p._id);
+            setWishlist(currentWishlist);
+          }
+        }
+
         const formattedData = propertiesList.slice(0, 3).map(p => ({
             id: p._id,
             title: p.title,
-            price: `${p.price >= 10000000 ? (p.price/10000000).toFixed(2) + ' Cr' : (p.price/100000).toFixed(0) + ' L'}`,
+            price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
             location: p.location,
             beds: p.bedrooms.toString(),
             baths: p.bathrooms.toString(),
@@ -43,16 +77,17 @@ function Home() {
             type: p.status || p.propertyType,
             rating: "4.8",
             verified: true,
+            isLiked: currentWishlist.includes(p._id),
             image: p.images[0],
             images: p.images
         }));
         setFeaturedProperties(formattedData);
       } catch (error) {
-        console.error('Error fetching featured properties:', error);
+        console.error('Error fetching initial data:', error);
       }
     };
 
-    fetchFeatured();
+    fetchInitialData();
   }, []);
 
   const tabs = [
@@ -264,7 +299,8 @@ function Home() {
                   ))}
                   
                   {/* Special Post Property Tab - Premium Style */}
-                  <button
+                  <Link
+                    to="/post-property"
                     className="flex-shrink-0 px-6 py-4 flex items-center gap-3 group transition-all"
                   >
                     <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-sm group-hover:shadow-emerald-200 group-hover:shadow-lg">
@@ -277,7 +313,7 @@ function Home() {
                         <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[8px] font-black shadow-lg shadow-emerald-200 animate-pulse border border-white/20">FREE</span>
                       </div>
                     </div>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -295,7 +331,11 @@ function Home() {
                 </div>
                 <div className="flex items-center gap-3 px-6 py-4 border-b lg:border-b-0 lg:border-r border-slate-100/50 hover:bg-slate-50/50 transition-colors">
                   <Building2 className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                  <select className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none bg-no-repeat bg-right">
+                  <select 
+                    value={propertyType}
+                    onChange={e => setPropertyType(e.target.value)}
+                    className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none bg-no-repeat bg-right"
+                  >
                     <option>All Types</option>
                     <option>Apartment</option>
                     <option>Villa</option>
@@ -305,7 +345,11 @@ function Home() {
                 </div>
                 <div className="flex items-center gap-3 px-6 py-4 border-b lg:border-b-0 lg:border-r border-slate-100/50 hover:bg-slate-50/50 transition-colors">
                   <span className="text-slate-400 text-sm font-bold flex-shrink-0">₹</span>
-                  <select className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none">
+                  <select 
+                    value={budget}
+                    onChange={e => setBudget(e.target.value)}
+                    className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none"
+                  >
                     <option>Any Budget</option>
                     <option>Under 50L</option>
                     <option>50L – 1Cr</option>
@@ -313,7 +357,10 @@ function Home() {
                     <option>2Cr+</option>
                   </select>
                 </div>
-                <button className="relative overflow-hidden group/btn flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-8 py-5 lg:py-4 transition-all duration-300 flex-shrink-0">
+                <button 
+                  onClick={handleSearch}
+                  className="relative overflow-hidden group/btn flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-8 py-5 lg:py-4 transition-all duration-300 flex-shrink-0"
+                >
                   <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 ease-out group-hover/btn:w-full" />
                   <Search className="w-5 h-5 relative z-10" />
                   <span className="relative z-10 text-sm lg:text-base">Search Properties</span>

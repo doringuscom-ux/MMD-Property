@@ -1,4 +1,5 @@
 import Property from '../models/propertyModel.js';
+import Notification from '../models/notificationModel.js';
 
 // @desc    Fetch all properties
 // @route   GET /api/properties
@@ -11,9 +12,14 @@ export const getProperties = async (req, res) => {
         const keyword = req.query.keyword ? {
             $or: [
                 { title: { $regex: req.query.keyword, $options: 'i' } },
-                { location: { $regex: req.query.keyword, $options: 'i' } }
+                { location: { $regex: req.query.keyword, $options: 'i' } },
+                { city: { $regex: req.query.keyword, $options: 'i' } }
             ]
         } : {};
+
+        const city = req.query.city && req.query.city !== 'All'
+            ? { city: req.query.city }
+            : {};
 
         const propertyType = req.query.propertyType && req.query.propertyType !== 'All'
             ? { propertyType: req.query.propertyType }
@@ -42,16 +48,25 @@ export const getProperties = async (req, res) => {
             else if (req.query.budget === 'Above 5 Crore') priceQuery = { price: { $gt: 50000000 } };
         }
 
-        const adminStatus = req.query.showAll === 'true'
-            ? {}
-            : { adminStatus: 'Published' };
+        // Handle visibility: 
+        // 1. Admin/Sub-admin with showAll=true sees everything
+        // 2. Authenticated user sees verified/published properties OR their own properties
+        // 3. Guests see only verified/published properties
+        let visibilityQuery = {};
+        if (req.query.showAll === 'true' && req.user && (req.user.role === 'admin' || req.user.role === 'sub-admin')) {
+            visibilityQuery = {};
+        } else if (req.user) {
+            visibilityQuery = {
+                $or: [
+                    { adminStatus: 'Published' },
+                    { postedBy: req.user._id }
+                ]
+            };
+        } else {
+            visibilityQuery = { adminStatus: 'Published' };
+        }
 
-        // Handle verification visibility
-        // If showAll=true (admin request), show everything. 
-        // Otherwise, show only verified properties.
-        const verificationQuery = req.query.showAll === 'true' ? {} : { isVerified: true };
-
-        const query = { ...keyword, ...propertyType, ...status, ...bedrooms, ...priceQuery, ...adminStatus, ...verificationQuery };
+        const query = { ...keyword, ...city, ...propertyType, ...status, ...bedrooms, ...priceQuery, ...visibilityQuery };
 
         const count = await Property.countDocuments(query);
         const properties = await Property.find(query)
@@ -74,6 +89,17 @@ export const getPropertyById = async (req, res) => {
     try {
         const property = await Property.findById(req.params.id);
         if (property) {
+            // Check if property is published
+            const isPublished = property.adminStatus === 'Published';
+            
+            // Check if user is Admin or Owner
+            const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'sub-admin');
+            const isOwner = req.user && property.postedBy && property.postedBy.toString() === req.user._id.toString();
+
+            if (!isPublished && !isAdmin && !isOwner) {
+                return res.status(403).json({ message: 'This property is pending approval and can only be viewed by the owner or admin' });
+            }
+
             res.json(property);
         } else {
             res.status(404).json({ message: 'Property not found' });
@@ -90,16 +116,30 @@ export const createProperty = async (req, res) => {
     try {
         const { title, description, price, location, propertyType, bedrooms, bathrooms, area } = req.body;
 
-        // If a regular user posts, it stays unverified
-        const isVerified = req.user.role === 'admin' || req.user.role === 'sub-admin';
+        // If a regular user posts, it stays unverified and pending
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
+        const isVerified = isAdmin;
+        const adminStatus = isAdmin ? (req.body.adminStatus || 'Published') : 'Pending';
 
         const property = new Property({
             ...req.body,
             postedBy: req.user._id,
-            isVerified: isVerified
+            isVerified: isVerified,
+            adminStatus: adminStatus
         });
 
         const createdProperty = await property.save();
+
+        // Create notification for admin if a regular user posts
+        if (!isAdmin) {
+            await Notification.create({
+                user: req.user._id,
+                property: createdProperty._id,
+                message: `New property listing added by ${req.user.name}: ${createdProperty.title}`,
+                type: 'PropertyAdded'
+            });
+        }
+
         res.status(201).json(createdProperty);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -114,14 +154,40 @@ export const updateProperty = async (req, res) => {
         const property = await Property.findById(req.params.id);
 
         if (property) {
-            // Check if sub-admin is trying to edit someone else's post? 
-            // User said "admin sab edit kar saka", implying sub-admin might be restricted or can only edit theirs.
-            // But usually sub-admins can edit everything. I'll allow everything for now but track who edited.
+            // Check permissions: Admin/Sub-admin or the Owner
+            const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
+            const isOwner = property.postedBy && property.postedBy.toString() === req.user._id.toString();
+
+            if (!isAdmin && !isOwner) {
+                return res.status(403).json({ message: 'Not authorized to edit this property' });
+            }
+
+            // If a regular user edits, it goes back to Pending status
+            if (!isAdmin) {
+                req.body.adminStatus = 'Pending';
+                req.body.isVerified = false;
+            }
 
             Object.assign(property, req.body);
             property.updatedBy = req.user._id;
 
+            // If an admin is publishing, auto-verify
+            if (isAdmin && property.adminStatus === 'Published') {
+                property.isVerified = true;
+            }
+
             const updatedProperty = await property.save();
+
+            // Create notification for admin if a regular user updates
+            if (!isAdmin) {
+                await Notification.create({
+                    user: req.user._id,
+                    property: updatedProperty._id,
+                    message: `Property listing updated by ${req.user.name}: ${updatedProperty.title}`,
+                    type: 'PropertyUpdated'
+                });
+            }
+
             res.json(updatedProperty);
         } else {
             res.status(404).json({ message: 'Property not found' });
@@ -139,6 +205,13 @@ export const deleteProperty = async (req, res) => {
         const property = await Property.findById(req.params.id);
 
         if (property) {
+            const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
+            const isOwner = property.postedBy && property.postedBy.toString() === req.user._id.toString();
+
+            if (!isAdmin && !isOwner) {
+                return res.status(403).json({ message: 'Not authorized to delete this property' });
+            }
+
             await property.deleteOne();
             res.json({ message: 'Property removed' });
         } else {
@@ -154,6 +227,12 @@ export const deleteProperty = async (req, res) => {
 export const bulkUpdateProperties = async (req, res) => {
     try {
         const { ids, updateData } = req.body;
+
+        // Auto-verify if publishing
+        if (updateData.adminStatus === 'Published') {
+            updateData.isVerified = true;
+        }
+
         await Property.updateMany({ _id: { $in: ids } }, { $set: updateData });
         res.json({ message: 'Properties updated successfully' });
     } catch (error) {

@@ -72,7 +72,7 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
                   <h2 className="text-3xl font-black text-slate-900">{property.title}</h2>
                   <div className="flex items-center gap-2 text-slate-500 font-medium">
                      <MapPin className="w-4 h-4 text-blue-500" />
-                     <span>{property.location}</span>
+                     <span>{property.location}{property.city ? `, ${property.city}` : ''}</span>
                   </div>
                </div>
                <div className="text-right">

@@ -162,3 +162,43 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ message: error.message || 'Internal Server Error' });
     }
 };
+// @desc    Toggle property in wishlist
+// @route   POST /api/users/wishlist/:id
+export const toggleWishlist = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const propertyId = req.params.id;
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const index = user.wishlist.indexOf(propertyId);
+        if (index === -1) {
+            user.wishlist.push(propertyId);
+            await user.save();
+            res.json({ message: 'Added to wishlist', wishlist: user.wishlist });
+        } else {
+            user.wishlist.splice(index, 1);
+            await user.save();
+            res.json({ message: 'Removed from wishlist', wishlist: user.wishlist });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user wishlist
+// @route   GET /api/users/wishlist
+export const getWishlist = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('wishlist');
+        if (user) {
+            res.json(user.wishlist);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

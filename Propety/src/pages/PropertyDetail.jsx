@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import {
   MapPin, BedDouble, Bath, Square, Calendar, ShieldCheck,
   Share2, Heart, Phone, Mail, MessageSquare, ChevronRight,
-  CheckCircle2, Star, Clock, Map, Building2, User2, ArrowLeft
+  CheckCircle2, Star, Clock, Map, Building2, User2, ArrowLeft,
+  Loader2, AlertCircle
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -14,19 +15,43 @@ const PropertyDetail = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/properties/${id}`);
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const response = await fetch(`${BASE_URL}/properties/${id}`, {
+          headers: {
+            'Authorization': userInfo?.token ? `Bearer ${userInfo.token}` : ''
+          }
+        });
         const data = await response.json();
         
+        if (!response.ok) {
+            setError(data.message || 'Property not found');
+            setLoading(false);
+            return;
+        }
+
+        // Check if property is in user's wishlist
+        if (userInfo) {
+          const wishRes = await fetch(`${BASE_URL}/users/wishlist`, {
+            headers: { 'Authorization': `Bearer ${userInfo.token}` }
+          });
+          const wishData = await wishRes.json();
+          if (wishRes.ok) {
+            setIsLiked(wishData.some(p => p._id === id));
+          }
+        }
+
         // Format data for the UI
         const formattedData = {
             id: data._id,
             title: data.title,
-            price: `${data.price >= 10000000 ? (data.price/10000000).toFixed(2) + ' Cr' : (data.price/100000).toFixed(0) + ' L'}`,
+            price: data.price >= 10000000 ? (data.price/10000000).toFixed(2) + ' Cr' : data.price >= 100000 ? (data.price/100000).toFixed(2) + ' L' : data.price.toLocaleString('en-IN'),
             location: data.location,
             type: data.propertyType,
             status: "For Sale",
@@ -38,7 +63,7 @@ const PropertyDetail = () => {
               "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
               "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
             ],
-            features: ["Modular Kitchen", "Clubhouse", "24/7 Security", "Power Backup", "Gymnasium", "Swimming Pool", "Car Parking", "Garden"],
+            features: data.premiumFeatures ? data.premiumFeatures.split(',').map(f => f.trim()).filter(f => f !== '') : [],
             agent: {
               name: "Rakesh Saini",
               role: "Senior Consultant",
@@ -59,6 +84,7 @@ const PropertyDetail = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching property:', error);
+        setError('Failed to connect to server');
         setLoading(false);
       }
     };
@@ -67,7 +93,47 @@ const PropertyDetail = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  const handleSave = async () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/users/wishlist/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${userInfo.token}`
+        }
+      });
+      if (response.ok) {
+        setIsLiked(!isLiked);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-12 h-12 text-blue-600 animate-spin" /></div>;
+  
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center p-8 text-center bg-slate-50">
+      <div className="bg-white p-12 rounded-[3rem] shadow-2xl shadow-slate-200/50 max-w-lg border border-slate-100">
+        <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8">
+          <AlertCircle className="w-10 h-10 text-red-500" />
+        </div>
+        <h3 className="text-3xl font-black text-slate-900 mb-4">{error}</h3>
+        <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+          The property you are looking for might be pending approval or doesn't exist. Please try again later or contact support.
+        </p>
+        <Link to="/properties" className="inline-flex items-center gap-3 px-10 py-4.5 rounded-2.5xl bg-slate-900 text-white font-black text-sm hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10">
+          Browse Properties <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
+  );
+
   if (!property) return <div className="min-h-screen flex items-center justify-center">Property not found</div>;
 
   // Helper to convert price strings to numbers for the calculator
@@ -97,8 +163,16 @@ const PropertyDetail = () => {
               <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm">
                 <Share2 className="w-4 h-4" /> Share
               </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-red-500 font-bold hover:bg-red-50 transition-all shadow-sm">
-                <Heart className="w-4 h-4" /> Save
+              <button 
+                onClick={handleSave}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-sm font-bold ${
+                  isLiked 
+                    ? 'bg-red-500 border-red-500 text-white' 
+                    : 'bg-white border-slate-200 text-red-500 hover:bg-red-50'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} /> 
+                {isLiked ? 'Saved' : 'Save'}
               </button>
             </div>
           </div>
@@ -192,7 +266,8 @@ const PropertyDetail = () => {
                 </section>
 
                 {/* Features */}
-                <section className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+                {property.features.length > 0 && (
+                  <section className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
                   <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
                     <Star className="w-7 h-7 text-blue-600" /> Premium Features
                   </h3>
@@ -207,6 +282,7 @@ const PropertyDetail = () => {
                     ))}
                   </div>
                 </section>
+                )}
 
                 {/* Location Map Section */}
                 <section className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">

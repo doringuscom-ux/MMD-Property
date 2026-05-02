@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Star, ShieldCheck, ArrowUpRight, Eye, TrendingUp, Camera } from 'lucide-react';
+import { BASE_URL } from '../api';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Star, ShieldCheck, ArrowUpRight, Eye, TrendingUp, Camera, Clock } from 'lucide-react';
 
 const PropertyCard = ({
   image,
@@ -17,18 +19,44 @@ const PropertyCard = ({
   images = [],
   onViewDetails,
   onSave,
-  id
+  id,
+  adminStatus,
+  city,
+  isLiked
 }) => {
   const navigate = useNavigate();
-  const [wished, setWished] = useState(false);
-  const [shared, setShared] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
+  const [wished, setWished] = React.useState(isLiked || false);
+  const [shared, setShared] = React.useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [isHovering, setIsHovering] = React.useState(false);
 
-  const handleWishlist = (e) => {
+  // Sync wished state with isLiked prop
+  React.useEffect(() => {
+    setWished(isLiked);
+  }, [isLiked]);
+
+  const handleWishlist = async (e) => {
     e.stopPropagation();
-    setWished(!wished);
-    onSave?.(!wished);
+    
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/users/wishlist/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${userInfo.token}`
+        }
+      });
+      if (response.ok) {
+        setWished(!wished);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleShare = (e) => {
@@ -117,6 +145,13 @@ const PropertyCard = ({
             <span>{config.label}</span>
           </div>
 
+          {adminStatus === 'Pending' && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[9px] font-black tracking-widest text-amber-600 shadow-xl border border-amber-100">
+              <Clock className="w-3.5 h-3.5" />
+              <span>PENDING REVIEW</span>
+            </div>
+          )}
+
           <div className="flex gap-1.5">
             <button
               onClick={handleWishlist}
@@ -157,7 +192,7 @@ const PropertyCard = ({
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1 text-blue-600 font-bold text-[9px] uppercase tracking-wider">
             <MapPin className="w-3 h-3" />
-            <span>{location || 'SECTOR 6, PANCHKULA'}</span>
+            <span>{location}{city ? `, ${city}` : ''}</span>
           </div>
           {verified && (
             <div className="bg-emerald-50 p-0.5 rounded-full">

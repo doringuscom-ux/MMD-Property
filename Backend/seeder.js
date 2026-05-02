@@ -34,11 +34,7 @@ const importData = async () => {
         const adminId = adminUser._id;
 
         const cityNames = [
-            'Chandigarh', 'Zirakpur', 'Mohali', 'Panchkula', 'Ludhiana', 'Jalandhar', 'Amritsar',
-            'Patiala', 'Bathinda', 'Hoshiarpur', 'Moga', 'Pathankot', 'Firozpur', 'Kapurthala',
-            'Faridkot', 'Muktsar', 'Rajpura', 'Khanna', 'Phagwara', 'Kharar', 'Derabassi',
-            'Kalka', 'Pinjore', 'Ambala', 'Karnal', 'Panipat', 'Kurukshetra', 'Yamunanagar',
-            'Rohtak', 'Hisar', 'Delhi', 'Gurugram', 'Noida', 'New Chandigarh', 'Baddi'
+            'Chandigarh', 'Panchkula', 'Mohali', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'
         ];
 
         const locations = cityNames.map(city => ({
@@ -55,7 +51,8 @@ const importData = async () => {
                 title: 'Luxury 3BHK Flat in Zirakpur',
                 description: 'Spacious 3BHK with premium amenities and excellent connectivity.',
                 price: 6500000,
-                location: 'Zirakpur',
+                location: 'VIP Road',
+                city: 'Zirakpur',
                 status: 'For Sale',
                 propertyType: 'Apartment',
                 bedrooms: 3,
@@ -71,7 +68,8 @@ const importData = async () => {
                 title: 'Premium Office Space in Chandigarh',
                 description: 'Fully furnished office space in the heart of the city.',
                 price: 12000000,
-                location: 'Chandigarh',
+                location: 'Sector 17',
+                city: 'Chandigarh',
                 status: 'Commercial',
                 propertyType: 'Office',
                 bedrooms: 0,
@@ -87,7 +85,8 @@ const importData = async () => {
                 title: '4BHK Independent Villa',
                 description: 'Luxurious 4BHK villa with a private garden.',
                 price: 15000000,
-                location: 'Zirakpur',
+                location: 'Sector 6',
+                city: 'Panchkula',
                 status: 'Premium',
                 propertyType: 'Villa',
                 bedrooms: 4,
@@ -115,7 +114,6 @@ const importData = async () => {
         for (let i = 0; i < 27; i++) {
             const rCity = cityNames[Math.floor(Math.random() * cityNames.length)];
             const rType = propertyTypes[Math.floor(Math.random() * propertyTypes.length)];
-            // Avoid mismatch statuses and types, e.g. Office -> Commercial
             const rStatus = (rType === 'Office' || rType === 'Shop') ? 'Commercial' : statuses[Math.floor(Math.random() * statuses.length)];
 
             const beds = rType === 'Plot' || rType === 'Office' || rType === 'Shop' ? 0 : Math.floor(Math.random() * 4) + 1;
@@ -123,13 +121,14 @@ const importData = async () => {
             properties.push({
                 title: `Premium ${beds > 0 ? beds + 'BHK ' : ''}${rType} in ${rCity}`,
                 description: `A beautifully designed ${rType.toLowerCase()} available ${rStatus.toLowerCase() === 'commercial' ? 'for commercial use' : rStatus.toLowerCase()} in the prime location of ${rCity}. Features excellent amenities and connectivity.`,
-                price: Math.floor(Math.random() * 200) * 100000 + 2000000, // 20L to 2.2Cr
-                location: rCity,
+                price: Math.floor(Math.random() * 200) * 100000 + 2000000,
+                location: `Sector ${Math.floor(Math.random() * 30) + 1}`,
+                city: rCity,
                 status: rStatus,
                 propertyType: rType,
                 bedrooms: beds,
                 bathrooms: beds > 0 ? beds : (rType === 'Plot' ? 0 : 1),
-                area: Math.floor(Math.random() * 2000) + 500, // 500 to 2500 sqft
+                area: Math.floor(Math.random() * 2000) + 500,
                 featured: Math.random() > 0.8,
                 mapLink: `https://maps.app.goo.gl/example${rCity.replace(/\s+/g, '')}`,
                 postedBy: adminId,

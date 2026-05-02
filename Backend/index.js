@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import propertyRoutes from './routes/propertyRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -25,6 +26,7 @@ app.use(cookieParser());
 app.use('/api/properties', propertyRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Heartbeat / Ping Route
 app.get('/ping', (req, res) => {

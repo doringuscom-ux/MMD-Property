@@ -7,6 +7,8 @@ const PropertyFilters = ({
   setSortBy,
   searchLocality,
   setSearchLocality,
+  selectedCity,
+  setSelectedCity,
   selectedCategory,
   setSelectedCategory,
   selectedType,
@@ -26,7 +28,7 @@ const PropertyFilters = ({
   availableTypes = ['All']
 }) => {
   return (
-    <aside className={`fixed inset-0 z-[110] lg:relative lg:inset-auto transition-all duration-300 ${showFilters ? 'visible' : 'invisible lg:visible'}`}>
+    <aside className={`fixed inset-0 z-[110] lg:relative lg:inset-auto lg:z-10 transition-all duration-300 ${showFilters ? 'visible' : 'invisible lg:visible'}`}>
       <div
         className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${showFilters ? 'opacity-100' : 'opacity-0'}`}
         onClick={() => setShowFilters(false)}
@@ -56,18 +58,20 @@ const PropertyFilters = ({
             </div>
 
             <div>
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Search Locality</h4>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchLocality}
-                  onChange={(e) => setSearchLocality(e.target.value)}
-                  placeholder="e.g. Sector 20"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-2 ring-blue-500/20 outline-none transition-all"
-                />
+              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Select City</h4>
+              <div className="flex flex-wrap gap-2">
+                {['All', 'Panchkula', 'Mohali', 'Chandigarh', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'].map(city => (
+                  <button
+                    key={city}
+                    onClick={() => setSelectedCity(city)}
+                    className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all ${selectedCity === city ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20' : 'border-slate-100 text-slate-600 hover:border-blue-600 hover:text-blue-600'}`}
+                  >
+                    {city}
+                  </button>
+                ))}
               </div>
             </div>
+
 
             <div>
               <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Category</h4>

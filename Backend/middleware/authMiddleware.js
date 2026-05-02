@@ -49,4 +49,25 @@ const subAdmin = (req, res, next) => {
     }
 };
 
-export { protect, admin, subAdmin };
+const optionalProtect = async (req, res, next) => {
+    let token;
+    // Check for token in header or cookie
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies.jwt) {
+        token = req.cookies.jwt;
+    }
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.id).select('-password');
+        } catch (error) {
+            // Silently fail and proceed as guest if token is invalid
+            console.error('Optional auth failed:', error.message);
+        }
+    }
+    next();
+};
+
+export { protect, admin, subAdmin, optionalProtect };

@@ -58,8 +58,16 @@ const AdminPropertyModal = ({
                   <input required type="number" name="price" value={formData.price} onChange={handleInputChange} placeholder="e.g. 7500000" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-blue-600 outline-none transition-all font-bold text-sm" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Location *</label>
-                  <input required type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Sector 20, Panchkula" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-blue-600 outline-none transition-all font-bold text-sm" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">City *</label>
+                  <select required name="city" value={formData.city} onChange={handleInputChange} className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-sm focus:border-blue-600 transition-all">
+                    {['Chandigarh', 'Panchkula', 'Mohali', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'].map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sector / Area / Society *</label>
+                  <input required type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Sector 20 or Peer Muchalla" className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-blue-600 outline-none transition-all font-bold text-sm" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Type</label>

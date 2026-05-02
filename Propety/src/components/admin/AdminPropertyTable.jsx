@@ -205,7 +205,9 @@ const AdminPropertyTable = ({
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2 text-slate-500">
                       <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                      <span className="text-xs font-bold truncate max-w-[150px]">{property.location}</span>
+                      <span className="text-xs font-bold truncate max-w-[150px]">
+                        {property.location}{property.city ? `, ${property.city}` : ''}
+                      </span>
                     </div>
                   </td>
                   <td className="px-8 py-5 text-center">

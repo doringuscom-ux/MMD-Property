@@ -18,7 +18,7 @@ import AdminUsers from '../components/admin/AdminUsers';
 // Helper: Format price in Cr/Lakhs
 const formatPrice = (price) => {
   if (price >= 1e7) return `${(price / 1e7).toFixed(2)} Cr`;
-  if (price >= 1e5) return `${(price / 1e5).toFixed(0)} L`;
+  if (price >= 1e5) return `${(price / 1e5).toFixed(2)} L`;
   return price.toLocaleString('en-IN');
 };
 
@@ -58,6 +58,7 @@ const Admin = () => {
     propertyType: 'Apartment',
     status: 'For Sale',
     adminStatus: 'Published',
+    city: 'Chandigarh',
     bedrooms: '',
     bathrooms: '',
     area: '',
@@ -82,6 +83,11 @@ const Admin = () => {
           'Authorization': `Bearer ${userInfo?.token}`
         }
       });
+      if (response.status === 401) {
+        localStorage.removeItem('userInfo');
+        window.location.href = '/login';
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       setProperties(data.properties || []);
@@ -152,6 +158,7 @@ const Admin = () => {
       builtYear: new Date().getFullYear(),
       readyStatus: 'Ready to Move',
       premiumFeatures: '',
+      city: 'Chandigarh',
       coordinates: { lat: '', lng: '' }
     });
     setShowModal(true);
@@ -178,6 +185,7 @@ const Admin = () => {
       builtYear: property.builtYear || new Date().getFullYear(),
       readyStatus: property.readyStatus || 'Ready to Move',
       premiumFeatures: property.premiumFeatures || '',
+      city: property.city || 'Chandigarh',
       coordinates: property.coordinates || { lat: '', lng: '' }
     });
     setShowModal(true);
@@ -253,6 +261,30 @@ const Admin = () => {
       showToast('error', 'Failed to delete');
     } finally {
       setDeleteConfirm({ show: false, id: null });
+    }
+  };
+
+  const handleNotificationAction = async (notification) => {
+    if (notification.property) {
+      const propertyId = typeof notification.property === 'object' ? notification.property._id : notification.property;
+      try {
+        setLoading(true);
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const response = await fetch(`${BASE_URL}/properties/${propertyId}`, {
+          headers: { 'Authorization': `Bearer ${userInfo?.token}` }
+        });
+        if (response.ok) {
+          const property = await response.json();
+          setActiveTab('Properties');
+          openEditModal(property);
+        } else {
+          showToast('error', 'Could not find the property');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -344,7 +376,12 @@ const Admin = () => {
       <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <AdminTopbar activeTab={activeTab} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <AdminTopbar 
+          activeTab={activeTab} 
+          searchTerm={searchTerm} 
+          setSearchTerm={setSearchTerm} 
+          onNotificationClick={handleNotificationAction}
+        />
 
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC]">
           <AdminToast message={message} />

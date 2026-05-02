@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Home, Search, Building2, MapPin, ChevronRight, 
-  User, LogOut, Heart, List, ChevronDown 
+  User, LogOut, Heart, List, ChevronDown, Phone 
 } from 'lucide-react';
 import logoImg from '../assets/NewLogo.png';
 import { BASE_URL } from '../api';
 
-const Navbar = () => {
+const Navbar = ({ isSolid = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -47,12 +47,12 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Properties', icon: Building2, href: '/properties' },
-    { name: 'Search', icon: Search, href: '#' },
+    { name: 'Contact', icon: Phone, href: '/contact' },
     { name: 'Locations', icon: MapPin, href: '#' },
   ];
 
   return (
-    <nav className={`fixed w-full z-[100] transition-all duration-500 ease-in-out ${scrolled ? 'py-2 glass-light shadow-lg' : 'py-4 bg-white/0'
+    <nav className={`fixed w-full z-[1000] transition-all duration-500 ease-in-out ${isSolid || scrolled ? 'py-2 bg-white shadow-lg' : 'py-4 bg-white/0'
       }`}>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -127,18 +127,18 @@ const Navbar = () => {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Manage your profile</p>
                       </div>
                       <div className="p-2">
-                        <button className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
+                        <Link to="/my-properties" onClick={() => setIsProfileOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
                           <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white shadow-sm transition-all">
                             <List className="w-4 h-4" />
                           </div>
                           My Properties
-                        </button>
-                        <button className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
+                        </Link>
+                        <Link to="/saved-properties" onClick={() => setIsProfileOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
                           <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white shadow-sm transition-all">
                             <Heart className="w-4 h-4" />
                           </div>
                           Saved Properties
-                        </button>
+                        </Link>
                         <div className="h-px bg-slate-50 my-2 mx-4" />
                         <button 
                           onClick={handleLogout}
@@ -160,12 +160,12 @@ const Navbar = () => {
                 </Link>
               )}
 
-              <button className="relative group overflow-hidden px-6 py-3 rounded-2xl font-bold text-sm text-white transition-all duration-300 shadow-xl shadow-blue-600/20 active:scale-95">
+              <Link to="/post-property" className="relative group overflow-hidden px-6 py-3 rounded-2xl font-bold text-sm text-white transition-all duration-300 shadow-xl shadow-blue-600/20 active:scale-95">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-500 group-hover:from-blue-600 group-hover:to-blue-400 transition-all duration-300"></div>
                 <span className="relative flex items-center gap-2">
                   List Property <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -277,18 +277,18 @@ const Navbar = () => {
                       <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">Premium Member</p>
                     </div>
                   </div>
-                  <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
+                  <Link to="/my-properties" onClick={() => setIsOpen(false)} className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
                     <div className="p-2 rounded-xl bg-white shadow-sm group-hover:text-blue-600">
                       <List className="w-5 h-5" />
                     </div>
                     <span className="font-bold">My Properties</span>
-                  </button>
-                  <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
+                  </Link>
+                  <Link to="/saved-properties" onClick={() => setIsOpen(false)} className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
                     <div className="p-2 rounded-xl bg-white shadow-sm group-hover:text-blue-600">
                       <Heart className="w-5 h-5" />
                     </div>
                     <span className="font-bold">Saved Properties</span>
-                  </button>
+                  </Link>
                   <button 
                     onClick={handleLogout}
                     className="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 transition-all group"
@@ -309,9 +309,9 @@ const Navbar = () => {
           </div>
 
           <div className="p-6 border-t border-slate-50">
-            <button className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 active:scale-95 transition-all">
+            <Link to="/post-property" onClick={() => setIsOpen(false)} className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 active:scale-95 transition-all text-center block">
               List Your Property
-            </button>
+            </Link>
           </div>
         </div>
       </div>

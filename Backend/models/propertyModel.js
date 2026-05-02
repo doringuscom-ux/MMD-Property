@@ -17,6 +17,12 @@ const propertySchema = mongoose.Schema({
         type: String,
         required: true
     },
+    city: {
+        type: String,
+        required: true,
+        enum: ['Chandigarh', 'Panchkula', 'Mohali', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'],
+        default: 'Chandigarh'
+    },
     status: { 
         type: String, 
         required: true, 

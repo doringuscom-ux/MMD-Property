@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { BASE_URL } from '../api';
@@ -13,6 +14,7 @@ const Properties = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('Newest First');
   const [searchLocality, setSearchLocality] = useState('');
+  const [selectedCity, setSelectedCity] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [minPrice, setMinPrice] = useState(0);
@@ -27,18 +29,64 @@ const Properties = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [availableCategories, setAvailableCategories] = useState(['All']);
   const [availableTypes, setAvailableTypes] = useState(['All']);
+  const [wishlist, setWishlist] = useState([]);
+  const location = useLocation();
 
-  // Fetch unique filter options on mount
+  // Sync URL params with filters
   useEffect(() => {
-    const fetchFilterOptions = async () => {
+    const params = new URLSearchParams(location.search);
+    const search = params.get('search');
+    const category = params.get('category');
+    const type = params.get('type');
+    const budget = params.get('budget');
+
+    if (search) {
+      setSearchLocality(search);
+      setDebouncedSearch(search);
+      // Auto-select city if search matches a city name
+      const cities = ['Panchkula', 'Mohali', 'Chandigarh', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'];
+      const matchedCity = cities.find(c => c.toLowerCase() === search.toLowerCase());
+      if (matchedCity) setSelectedCity(matchedCity);
+    }
+    if (category) setSelectedCategory(category);
+    if (type) setSelectedType(type);
+    
+    if (budget) {
+      if (budget === 'Under 50L') {
+        setAppliedMinPrice(0);
+        setAppliedMaxPrice(5000000);
+        setMinPrice(0);
+        setMaxPrice(5000000);
+      } else if (budget === '50L – 1Cr') {
+        setAppliedMinPrice(5000000);
+        setAppliedMaxPrice(10000000);
+        setMinPrice(5000000);
+        setMaxPrice(10000000);
+      } else if (budget === '1Cr – 2Cr') {
+        setAppliedMinPrice(10000000);
+        setAppliedMaxPrice(20000000);
+        setMinPrice(10000000);
+        setMaxPrice(20000000);
+      } else if (budget === '2Cr+') {
+        setAppliedMinPrice(20000000);
+        setAppliedMaxPrice(100000000);
+        setMinPrice(20000000);
+        setMaxPrice(100000000);
+      }
+    }
+  }, [location.search]);
+
+  // Fetch unique filter options and wishlist on mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/properties?pageSize=200&showAll=true`);
-        const data = await response.json();
-        const allProps = data.properties || [];
+        // Fetch filters
+        const filterRes = await fetch(`${BASE_URL}/properties?pageSize=200&showAll=true`);
+        const filterData = await filterRes.json();
+        const allProps = filterData.properties || [];
         
         const categories = new Set();
         const types = new Set();
-        
         allProps.forEach(p => {
           if (p.status) categories.add(p.status);
           if (p.propertyType) types.add(p.propertyType);
@@ -46,26 +94,29 @@ const Properties = () => {
         
         setAvailableCategories(['All', ...Array.from(categories)]);
         setAvailableTypes(['All', ...Array.from(types)]);
+
+        // Fetch wishlist if logged in
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (userInfo) {
+          const wishRes = await fetch(`${BASE_URL}/users/wishlist`, {
+            headers: { 'Authorization': `Bearer ${userInfo.token}` }
+          });
+          const wishData = await wishRes.json();
+          if (wishRes.ok) {
+            setWishlist(wishData.map(p => p._id));
+          }
+        }
       } catch (err) {
-        console.error('Error fetching filter options:', err);
+        console.error('Error fetching initial data:', err);
       }
     };
-    fetchFilterOptions();
+    fetchInitialData();
   }, []);
-
-  // Debounce search locality
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchLocality);
-      setPage(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchLocality]);
 
   // Reset page when other filters change
   useEffect(() => {
     setPage(1);
-  }, [selectedType, selectedCategory, selectedBeds, appliedMinPrice, appliedMaxPrice]);
+  }, [selectedType, selectedCategory, selectedCity, selectedBeds, appliedMinPrice, appliedMaxPrice]);
 
   // Fetch properties with proper query parameters
   useEffect(() => {
@@ -78,8 +129,7 @@ const Properties = () => {
 
         if (selectedType !== 'All') params.append('propertyType', selectedType);
         if (selectedCategory !== 'All') params.append('status', selectedCategory);
-
-        if (debouncedSearch) params.append('keyword', debouncedSearch);
+        if (selectedCity !== 'All') params.append('city', selectedCity);
 
         if (selectedBeds !== 'Any') {
           let bedValue = selectedBeds === '5' ? 5 : parseInt(selectedBeds, 10);
@@ -90,7 +140,12 @@ const Properties = () => {
         if (appliedMaxPrice < 100000000) params.append('maxPrice', appliedMaxPrice);
 
         const url = `${BASE_URL}/properties?${params.toString()}`;
-        const response = await fetch(url);
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': userInfo?.token ? `Bearer ${userInfo.token}` : ''
+          }
+        });
         const data = await response.json();
 
         const propertiesList = data.properties || [];
@@ -100,14 +155,17 @@ const Properties = () => {
         const formattedData = propertiesList.map(p => ({
           id: p._id,
           title: p.title,
-          price: `${p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : (p.price / 1e5).toFixed(0) + ' L'}`,
+          price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
           location: p.location,
-          beds: p.bedrooms.toString(),
-          baths: p.bathrooms.toString(),
-          area: p.area.toString(),
+          beds: p.bedrooms?.toString() || '0',
+          baths: p.bathrooms?.toString() || '0',
+          area: p.area?.toString() || '0',
           type: p.status || p.propertyType,
           rating: "4.8",
-          verified: true,
+          verified: p.isVerified,
+          city: p.city,
+          adminStatus: p.adminStatus,
+          isLiked: wishlist.includes(p._id),
           image: p.images[0],
           images: p.images
         }));
@@ -121,7 +179,7 @@ const Properties = () => {
 
     fetchProperties(page);
     window.scrollTo(0, 0);
-  }, [page, selectedType, selectedCategory, debouncedSearch, selectedBeds, appliedMinPrice, appliedMaxPrice]);
+  }, [page, selectedType, selectedCategory, selectedCity, selectedBeds, appliedMinPrice, appliedMaxPrice, wishlist]);
 
   const parsePrice = (priceStr) => {
     if (!priceStr) return 0;
@@ -141,6 +199,7 @@ const Properties = () => {
 
   const clearFilters = () => {
     setSearchLocality('');
+    setSelectedCity('All');
     setSelectedType('All');
     setSelectedCategory('All');
     setMinPrice(0);
@@ -184,6 +243,8 @@ const Properties = () => {
             setSortBy={setSortBy}
             searchLocality={searchLocality}
             setSearchLocality={setSearchLocality}
+            selectedCity={selectedCity}
+            setSelectedCity={setSelectedCity}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
             selectedType={selectedType}
