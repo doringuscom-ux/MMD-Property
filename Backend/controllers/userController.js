@@ -63,10 +63,6 @@ export const logoutUser = (req, res) => {
 export const sendOTPRequest = async (req, res) => {
     const { email, isRegistration } = req.body;
 
-    if (process.env.WORKING_STATUS !== 'done') {
-        return res.status(403).json({ message: 'OTP Service is temporarily disabled for maintenance.' });
-    }
-
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
     }

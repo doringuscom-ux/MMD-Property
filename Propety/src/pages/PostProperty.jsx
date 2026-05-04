@@ -7,10 +7,7 @@ import {
   Sparkles, Building, Calendar, CheckCircle2, AlertCircle, Edit3, Camera, RefreshCw
 } from 'lucide-react';
 import { BASE_URL } from '../api';
-import { useAppStatus } from '../hooks/useAppStatus';
-
 const PostProperty = () => {
-  const { isDone } = useAppStatus();
   const { id } = useParams();
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -361,9 +358,8 @@ const PostProperty = () => {
                          value={img} 
                          onChange={(e) => handleImageChange(idx, e.target.value)} 
                          placeholder="Image URL or Click Camera to Upload" 
-                         className={`w-full pl-14 ${isDone ? 'pr-32' : 'pr-6'} py-5 rounded-[2rem] bg-slate-50 border border-slate-100 focus:bg-white outline-none font-bold text-xs focus:border-blue-600 transition-all shadow-sm`} 
+                         className="w-full pl-14 pr-32 py-5 rounded-[2rem] bg-slate-50 border border-slate-100 focus:bg-white outline-none font-bold text-xs focus:border-blue-600 transition-all shadow-sm" 
                        />
-                       {isDone && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
                            <button 
                              type="button" 
@@ -378,7 +374,6 @@ const PostProperty = () => {
                              </button>
                            )}
                         </div>
-                       )}
 
                        {showOptionsIndex === idx && (
                           <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-2 z-[50] animate-in slide-in-from-top-2">

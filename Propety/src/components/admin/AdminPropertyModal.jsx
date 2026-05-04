@@ -15,7 +15,6 @@ const AdminPropertyModal = ({
   addImageField,
   removeImageField
 }) => {
-  const { isDone } = useAppStatus();
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
@@ -270,22 +269,20 @@ const AdminPropertyModal = ({
                     <div className="flex-1 space-y-2">
                        <div className="relative group/input">
                           <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input type="text" value={img} onChange={(e) => handleImageChange(idx, e.target.value)} placeholder="Image URL or Upload..." className={`w-full pl-11 ${isDone ? 'pr-24' : 'pr-4'} py-3.5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium text-xs focus:border-blue-600 transition-all`} />
+                          <input type="text" value={img} onChange={(e) => handleImageChange(idx, e.target.value)} placeholder="Image URL or Upload..." className="w-full pl-11 pr-24 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-medium text-xs focus:border-blue-600 transition-all" />
                           
-                          {isDone && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                               <button 
-                                 type="button" 
-                                 onClick={() => setShowOptionsIndex(showOptionsIndex === idx ? null : idx)}
-                                 className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
-                               >
-                                 {uploadingIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
-                               </button>
-                            </div>
-                          )}
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                             <button 
+                               type="button" 
+                               onClick={() => setShowOptionsIndex(showOptionsIndex === idx ? null : idx)}
+                               className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
+                             >
+                               {uploadingIndex === idx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                             </button>
+                          </div>
 
                           {/* Mini Options Menu */}
-                          {isDone && showOptionsIndex === idx && (
+                          {showOptionsIndex === idx && (
                             <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-[200] animate-in slide-in-from-top-2">
                                <button type="button" onClick={() => startCamera(idx)} className="w-full flex items-center gap-2 p-2 hover:bg-blue-50 rounded-xl text-[10px] font-black text-slate-700">
                                   <Camera className="w-3 h-3 text-blue-600" /> Take Photo

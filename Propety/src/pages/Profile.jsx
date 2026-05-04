@@ -3,10 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { User, Mail, Phone, Lock, Save, Camera, ShieldCheck, CheckCircle2, XCircle, Key, Eye, EyeOff, Loader2, Image as ImageIcon, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../api';
-import { useAppStatus } from '../hooks/useAppStatus';
-
 const Profile = () => {
-  const { isDone } = useAppStatus();
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -303,15 +300,13 @@ const Profile = () => {
                   <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
                   {/* Camera Icon Button */}
-                  {isDone && (
-                    <button 
-                      type="button"
-                      onClick={() => setShowUploadOptions(!showUploadOptions)}
-                      className="absolute bottom-0 right-0 p-3 bg-white rounded-2xl shadow-xl border border-slate-100 text-blue-600 hover:scale-110 transition-transform active:scale-95"
-                    >
-                      <Camera className="w-5 h-5" />
-                    </button>
-                  )}
+                  <button 
+                    type="button"
+                    onClick={() => setShowUploadOptions(!showUploadOptions)}
+                    className="absolute bottom-0 right-0 p-3 bg-white rounded-2xl shadow-xl border border-slate-100 text-blue-600 hover:scale-110 transition-transform active:scale-95"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
 
                   {/* Upload Options Menu */}
                   {showUploadOptions && (
@@ -401,7 +396,7 @@ const Profile = () => {
                           className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-blue-600 outline-none transition-all font-medium text-slate-900"
                           placeholder="your@email.com"
                         />
-                        {formData.email !== originalEmail && isDone && (
+                        {formData.email !== originalEmail && (
                           <button 
                             type="button"
                             onClick={handleSendOTP}
@@ -412,9 +407,6 @@ const Profile = () => {
                           </button>
                         )}
                       </div>
-                      {formData.email !== originalEmail && !isDone && (
-                        <p className="text-[10px] font-bold text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Verification disabled</p>
-                      )}
                     </div>
                   </div>
 
@@ -436,7 +428,7 @@ const Profile = () => {
                 <div className="space-y-6 pt-6">
                   <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Security Settings</h4>
-                    {isVerificationNeeded && isDone && (
+                    {isVerificationNeeded && (
                         <button 
                           type="button"
                           onClick={handleSendOTP}
@@ -445,9 +437,6 @@ const Profile = () => {
                         >
                           {otpLoading ? '...' : isOtpSent ? 'OTP Sent' : 'Forgot Password? Get OTP'}
                         </button>
-                    )}
-                    {isVerificationNeeded && !isDone && (
-                        <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> OTP disabled</p>
                     )}
                   </div>
                   

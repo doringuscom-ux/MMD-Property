@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, ArrowRight, Building2, CheckCircle2, XCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../api';
-import { useAppStatus } from '../hooks/useAppStatus';
 
 const Signup = () => {
-  const { isDone } = useAppStatus();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -152,7 +150,7 @@ const Signup = () => {
               {message && (
                  <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-sm font-bold flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5" /> {message}
-                 </div>
+              </div>
               )}
 
               <form onSubmit={handleSignup} className="space-y-5">
@@ -180,22 +178,15 @@ const Signup = () => {
                         <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
                         <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
                       </div>
-                      {isDone && (
-                        <button 
-                          type="button"
-                          onClick={handleSendOTP}
-                          disabled={otpLoading || isOtpSent}
-                          className="px-4 rounded-2xl bg-emerald-600 text-white text-[10px] font-black hover:bg-emerald-700 transition-all disabled:bg-slate-200 disabled:text-slate-400 min-w-[80px]"
-                        >
-                          {otpLoading ? '...' : isOtpSent ? 'Sent' : 'Get OTP'}
-                        </button>
-                      )}
+                      <button 
+                        type="button"
+                        onClick={handleSendOTP}
+                        disabled={otpLoading || isOtpSent}
+                        className="px-4 rounded-2xl bg-emerald-600 text-white text-[10px] font-black hover:bg-emerald-700 transition-all disabled:bg-slate-200 disabled:text-slate-400 min-w-[80px]"
+                      >
+                        {otpLoading ? '...' : isOtpSent ? 'Sent' : 'Get OTP'}
+                      </button>
                     </div>
-                    {!isDone && (
-                      <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100 text-[10px] font-bold text-amber-700">
-                         <AlertCircle className="w-4 h-4" /> Registration is temporarily disabled for maintenance.
-                      </div>
-                    )}
                  </div>
 
                  {isOtpSent && (

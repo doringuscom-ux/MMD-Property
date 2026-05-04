@@ -9,9 +9,6 @@ const router = express.Router();
 // @desc    Upload any image to Cloudinary
 // @route   POST /api/upload
 router.post('/', protect, upload.single('image'), async (req, res) => {
-    if (process.env.WORKING_STATUS !== 'done') {
-        return res.status(403).json({ message: 'Image upload is temporarily disabled.' });
-    }
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });

@@ -42,10 +42,6 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
-app.get('/api/status', (req, res) => {
-    res.json({ status: process.env.WORKING_STATUS || 'pending' });
-});
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
