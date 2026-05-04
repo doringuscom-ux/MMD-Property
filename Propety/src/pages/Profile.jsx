@@ -165,7 +165,8 @@ const Profile = () => {
         setMessage({ type: 'error', text: data.message || 'Upload failed' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error uploading image' });
+      console.error('Profile Upload Client Error:', error);
+      setMessage({ type: 'error', text: 'Error uploading image: ' + error.message });
     } finally {
       setUploading(false);
     }
@@ -561,7 +562,8 @@ const Profile = () => {
                     ref={videoRef} 
                     autoPlay 
                     playsInline 
-                    className="w-full h-full object-cover mirror"
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
                   />
                   <div className="absolute inset-0 border-[40px] border-black/20 pointer-events-none flex items-center justify-center">
                      <div className="w-64 h-64 border-2 border-dashed border-white/50 rounded-full"></div>
@@ -611,11 +613,7 @@ const Profile = () => {
 
       <Footer />
 
-      <style jsx>{`
-        .mirror {
-          transform: scaleX(-1);
-        }
-      `}</style>
+
     </div>
   );
 };

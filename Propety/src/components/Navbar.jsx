@@ -108,8 +108,12 @@ const Navbar = ({ isSolid = false }) => {
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-3 px-3 py-1.5 rounded-2xl hover:bg-slate-50 transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                      <User className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200 overflow-hidden">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
                     </div>
                     <div className="text-left hidden xl:block">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Welcome back</p>
@@ -183,9 +187,19 @@ const Navbar = ({ isSolid = false }) => {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-3">
-            <button className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shadow-sm">
-              <User className="w-5 h-5" />
-            </button>
+            {user ? (
+              <Link to="/profile" className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200 overflow-hidden">
+                {user.avatar ? (
+                  <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+              </Link>
+            ) : (
+              <Link to="/login" className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shadow-sm">
+                <User className="w-5 h-5" />
+              </Link>
+            )}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="relative p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 hover:text-blue-600 transition-all"
@@ -281,8 +295,12 @@ const Navbar = ({ isSolid = false }) => {
               {user ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-4 p-4 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/30">
-                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                      <User className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6" />
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-black">Hi, {user.name}</p>

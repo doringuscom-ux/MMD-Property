@@ -157,7 +157,8 @@ export const getUserProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            role: user.role
+            role: user.role,
+            avatar: user.avatar
         });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -233,8 +234,10 @@ export const updateUserProfile = async (req, res) => {
 // @desc    Upload user avatar
 // @route   POST /api/users/avatar
 export const uploadAvatar = async (req, res) => {
+    console.log('Avatar Upload Started for User:', req.user?._id);
     try {
         if (!req.file) {
+            console.log('No file received in request');
             return res.status(400).json({ message: 'Please upload an image' });
         }
 
@@ -254,15 +257,18 @@ export const uploadAvatar = async (req, res) => {
         fs.unlinkSync(req.file.path);
 
         // Update user
-        user.avatar = result.secure_url;
-        await user.save();
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { avatar: result.secure_url },
+            { new: true }
+        );
 
         res.json({
             message: 'Profile image updated',
-            avatar: user.avatar
+            avatar: updatedUser.avatar
         });
     } catch (error) {
-        console.error('Avatar Upload Error:', error);
+        console.error('Avatar Upload Error Details:', error);
         res.status(500).json({ message: error.message });
     }
 };
