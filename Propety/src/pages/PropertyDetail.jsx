@@ -18,6 +18,14 @@ const PropertyDetail = () => {
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [enquiryData, setEnquiryData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: 'I am interested in this property and would like to know more details.'
+  });
+  const [enquiryLoading, setEnquiryLoading] = useState(false);
+  const [enquiryStatus, setEnquiryStatus] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -53,6 +61,7 @@ const PropertyDetail = () => {
             title: data.title,
             price: data.price >= 10000000 ? (data.price/10000000).toFixed(2) + ' Cr' : data.price >= 100000 ? (data.price/100000).toFixed(2) + ' L' : data.price.toLocaleString('en-IN'),
             location: data.location,
+            city: data.city,
             type: data.propertyType,
             status: "For Sale",
             area: `${data.area} sq.ft`,
@@ -71,7 +80,7 @@ const PropertyDetail = () => {
               image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
             },
             details: {
-              "Property ID": data._id.substring(0, 8).toUpperCase(),
+              "Property ID": data.propertyId || data._id.substring(0, 8).toUpperCase(),
               "Built Year": data.builtYear || "2023",
               "Furnishing": data.furnishing || "Semi-Furnished",
               "Facing": data.facing || "North-East",
@@ -112,6 +121,51 @@ const PropertyDetail = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleEnquiryChange = (e) => {
+    setEnquiryData({ ...enquiryData, [e.target.name]: e.target.value });
+  };
+
+  const handleEnquirySubmit = async (e) => {
+    e.preventDefault();
+    setEnquiryLoading(true);
+    setEnquiryStatus({ type: '', text: '' });
+
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+
+    try {
+      const response = await fetch(`${BASE_URL}/enquiries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': userInfo ? `Bearer ${userInfo.token}` : ''
+        },
+        body: JSON.stringify({
+          ...enquiryData,
+          property: id
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEnquiryStatus({ type: 'success', text: 'Enquiry sent successfully! We will contact you soon.' });
+        setEnquiryData({
+          name: '',
+          email: '',
+          phone: '',
+          message: 'I am interested in this property and would like to know more details.'
+        });
+      } else {
+        setEnquiryStatus({ type: 'error', text: data.message || 'Failed to send enquiry.' });
+      }
+    } catch (error) {
+      console.error('Enquiry error:', error);
+      setEnquiryStatus({ type: 'error', text: 'Something went wrong. Please try again.' });
+    } finally {
+      setEnquiryLoading(false);
     }
   };
 
@@ -192,7 +246,7 @@ const PropertyDetail = () => {
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{property.title}</h1>
                 <div className="flex items-center gap-2 text-slate-500 font-medium text-lg">
                   <MapPin className="w-5 h-5 text-blue-600" />
-                  {property.location}
+                  {property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}
                 </div>
               </div>
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 min-w-[200px] text-center md:text-right">
@@ -284,61 +338,7 @@ const PropertyDetail = () => {
                 </section>
                 )}
 
-                {/* Location Map Section */}
-                <section className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                    <Map className="w-7 h-7 text-blue-600" /> Location Map
-                  </h3>
-                  <div className="aspect-video rounded-[1.5rem] bg-slate-100 border border-slate-200 relative overflow-hidden group">
-                    {property.mapLink ? (
-                      <div className="w-full h-full relative">
-                        <div 
-                          className="w-full h-full" 
-                          dangerouslySetInnerHTML={{ __html: property.mapLink.replace(/width="\d+"/, 'width="100%"').replace(/height="\d+"/, 'height="100%"') }} 
-                        />
-                        {/* Overlay to catch clicks and show directions button */}
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                          <div className="p-5 rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-2xl text-center space-y-3 max-w-xs pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto shadow-xl shadow-blue-600/30">
-                              <MapPin className="w-7 h-7 text-white" />
-                            </div>
-                            <h4 className="text-xl font-black text-slate-900">Live Map</h4>
-                            <p className="text-slate-500 font-medium text-sm">Explore the surroundings of {property.location}.</p>
-                            <button 
-                              onClick={() => {
-                                const match = property.mapLink.match(/src="([^"]+)"/);
-                                if (match && match[1]) window.open(match[1], '_blank');
-                              }}
-                              className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-black text-sm hover:bg-blue-600 transition-colors"
-                            >
-                              Open in Full Map
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <img
-                          src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                          alt="Map"
-                          className="w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="p-5 rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-2xl text-center space-y-3 max-w-xs">
-                            <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto shadow-xl shadow-blue-600/30">
-                              <MapPin className="w-7 h-7 text-white" />
-                            </div>
-                            <h4 className="text-xl font-black text-slate-900">Premium Location</h4>
-                            <p className="text-slate-500 font-medium text-sm">Located in the most sought-after area of {property.location}.</p>
-                            <button className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-black text-sm hover:bg-blue-600 transition-colors">
-                              Get Directions
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </section>
+
 
                 {/* EMI Calculator Section */}
                 <EMICalculator initialAmount={parsePrice(property.price)} />
@@ -373,22 +373,64 @@ const PropertyDetail = () => {
                         WhatsApp Inquiry
                       </button>
                     </div>
-                    <div className="mt-6 pt-6 border-t border-slate-100">
+                    <form onSubmit={handleEnquirySubmit} className="mt-6 pt-6 border-t border-slate-100">
                       <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mb-4 text-center">Express Interest</p>
-                      <input
-                        type="text"
-                        placeholder="Your Name"
-                        className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all mb-3"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Your Email"
-                        className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all mb-4"
-                      />
-                      <button className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-black text-sm hover:bg-blue-600 transition-colors shadow-xl shadow-slate-900/20">
-                        Request Details
-                      </button>
-                    </div>
+                      
+                      {enquiryStatus.text && (
+                        <div className={`mb-4 p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                          enquiryStatus.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                        }`}>
+                          {enquiryStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                          {enquiryStatus.text}
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <input
+                          required
+                          type="text"
+                          name="name"
+                          value={enquiryData.name}
+                          onChange={handleEnquiryChange}
+                          placeholder="Your Name"
+                          className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all"
+                        />
+                        <input
+                          required
+                          type="email"
+                          name="email"
+                          value={enquiryData.email}
+                          onChange={handleEnquiryChange}
+                          placeholder="Your Email"
+                          className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all"
+                        />
+                        <input
+                          required
+                          type="tel"
+                          name="phone"
+                          value={enquiryData.phone}
+                          onChange={handleEnquiryChange}
+                          placeholder="Phone Number"
+                          className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all"
+                        />
+                        <textarea
+                          required
+                          name="message"
+                          value={enquiryData.message}
+                          onChange={handleEnquiryChange}
+                          rows="3"
+                          placeholder="Your Message"
+                          className="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium focus:ring-4 ring-blue-500/10 focus:border-blue-600 transition-all resize-none"
+                        />
+                        <button 
+                          type="submit" 
+                          disabled={enquiryLoading}
+                          className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-black text-sm hover:bg-blue-600 transition-colors shadow-xl shadow-slate-900/20 disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                          {enquiryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Details'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
                 <div className="bg-slate-900 rounded-[2rem] p-6 text-white relative overflow-hidden group">
@@ -396,9 +438,9 @@ const PropertyDetail = () => {
                   <div className="relative">
                     <h3 className="text-xl font-black mb-3">Want to Sell?</h3>
                     <p className="text-slate-400 text-sm font-medium mb-4">List your property with Panchkula's #1 Property Partner and get the best value.</p>
-                    <button className="flex items-center gap-2 text-white font-black group/link">
+                    <Link to="/post-property" className="flex items-center gap-2 text-white font-black group/link">
                       List Your Property <ChevronRight className="w-5 h-5 text-blue-500 group-hover/link:translate-x-1 transition-transform" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

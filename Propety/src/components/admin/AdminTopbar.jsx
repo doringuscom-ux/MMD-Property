@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Menu, Clock, CheckCircle2, Trash2, X, Plus, Edit3 } from 'lucide-react';
+import { Search, Bell, Menu, Clock, CheckCircle2, Trash2, X, Plus, Edit3, MessageSquare } from 'lucide-react';
 import { BASE_URL } from '../../api';
 
 const formatTimeAgo = (date) => {
@@ -184,9 +184,13 @@ const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick
                       >
                         {!n.isRead && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />}
                         <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center ${
-                          n.type === 'PropertyAdded' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                          n.type === 'PropertyAdded' ? 'bg-emerald-50 text-emerald-600' : 
+                          n.type === 'EnquiryAdded' ? 'bg-amber-50 text-amber-600' :
+                          'bg-blue-50 text-blue-600'
                         }`}>
-                          {n.type === 'PropertyAdded' ? <Plus className="w-6 h-6" /> : <Edit3 className="w-6 h-6" />}
+                          {n.type === 'PropertyAdded' ? <Plus className="w-6 h-6" /> : 
+                           n.type === 'EnquiryAdded' ? <MessageSquare className="w-6 h-6" /> :
+                           <Edit3 className="w-6 h-6" />}
                         </div>
                         <div className="flex-1 space-y-1">
                           <p className={`text-sm leading-tight ${!n.isRead ? 'font-black text-slate-900' : 'font-medium text-slate-600'}`}>

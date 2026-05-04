@@ -192,7 +192,7 @@ const PropertyCard = ({
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1 text-blue-600 font-bold text-[9px] uppercase tracking-wider">
             <MapPin className="w-3 h-3" />
-            <span>{location}{city ? `, ${city}` : ''}</span>
+            <span>{location ? (city ? `${location}, ${city}` : location) : (city || '')}</span>
           </div>
           {verified && (
             <div className="bg-emerald-50 p-0.5 rounded-full">

@@ -7,7 +7,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
     { id: 'Add Property', icon: Plus, label: 'Add Property' },
     { id: 'Categories', icon: LayoutGrid, label: 'Categories' },
     { id: 'Users', icon: Users, label: 'Users' },
-    { id: 'Enquiries', icon: MessageSquare, label: 'Enquiries', comingSoon: true },
+    { id: 'Enquiries', icon: MessageSquare, label: 'Enquiries' },
     { id: 'Blog', icon: Newspaper, label: 'Blog', comingSoon: true },
     { id: 'Settings', icon: Settings, label: 'Settings', comingSoon: true },
     { id: 'Reports', icon: BarChart3, label: 'Reports', comingSoon: true },

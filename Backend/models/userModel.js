@@ -27,10 +27,18 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
     wishlist: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Property'
-    }]
+    }],
+    avatar: {
+        type: String,
+        default: ''
+    }
 }, {
     timestamps: true
 });

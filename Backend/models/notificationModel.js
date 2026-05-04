@@ -4,12 +4,17 @@ const notificationSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false // Optional for guest enquiries
     },
     property: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Property',
-        required: true
+        required: false // Optional for general enquiries
+    },
+    enquiry: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Enquiry',
+        required: false
     },
     message: {
         type: String,
@@ -17,7 +22,7 @@ const notificationSchema = mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['PropertyAdded', 'PropertyUpdated'],
+        enum: ['PropertyAdded', 'PropertyUpdated', 'EnquiryAdded'],
         default: 'PropertyAdded'
     },
     isRead: {

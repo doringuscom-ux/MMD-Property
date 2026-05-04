@@ -42,46 +42,64 @@ function Home() {
   }, []);
 
   const [featuredProperties, setFeaturedProperties] = useState([]);
+  const [topLocations, setTopLocations] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch properties
-        const response = await fetch(`${BASE_URL}/properties`);
+        const response = await fetch(`${BASE_URL}/properties?pageSize=100`);
         const data = await response.json();
-        const propertiesList = data.properties || [];
+        const allProperties = data.properties || [];
 
-        // Fetch wishlist if logged in
-        let currentWishlist = [];
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        if (userInfo) {
-          const wishRes = await fetch(`${BASE_URL}/users/wishlist`, {
-            headers: { 'Authorization': `Bearer ${userInfo.token}` }
-          });
-          const wishData = await wishRes.json();
-          if (wishRes.ok) {
-            currentWishlist = wishData.map(p => p._id);
-            setWishlist(currentWishlist);
-          }
-        }
+        // Identify Promoted vs Regular
+        const promoted = allProperties.filter(p => p.isPromoted);
+        const regular = allProperties.filter(p => !p.isPromoted);
 
-        const formattedData = propertiesList.slice(0, 3).map(p => ({
+        // Logic for 20-minute rotation of regular properties
+        const current20MinWindow = Math.floor(Date.now() / (1000 * 60 * 20));
+        const rotatedRegular = [...regular].sort((a, b) => {
+           // Deterministic shuffle based on window
+           const seed = current20MinWindow + a._id.toString();
+           return seed.localeCompare(current20MinWindow + b._id.toString());
+        });
+
+        // Combine (All Promoted first, then ONLY 5 rotated regular)
+        const combined = [...promoted, ...rotatedRegular.slice(0, 5)];
+
+        const formattedData = combined.map(p => ({
             id: p._id,
             title: p.title,
             price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
             location: p.location,
-            beds: p.bedrooms.toString(),
-            baths: p.bathrooms.toString(),
-            area: p.area.toString(),
+            beds: (p.bedrooms || 0).toString(),
+            baths: (p.bathrooms || 0).toString(),
+            area: (p.area || 0).toString(),
             type: p.status || p.propertyType,
             rating: "4.8",
-            verified: true,
-            isLiked: currentWishlist.includes(p._id),
+            verified: p.isVerified,
+            isLiked: false, // Will be updated below
+            isPromoted: p.isPromoted,
             image: p.images[0],
             images: p.images
         }));
+
         setFeaturedProperties(formattedData);
+
+        // Calculate Top Locations
+        const locationCounts = allProperties.reduce((acc, p) => {
+          const loc = p.city || p.location;
+          if (loc) acc[loc] = (acc[loc] || 0) + 1;
+          return acc;
+        }, {});
+
+        const sortedLocations = Object.entries(locationCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([name]) => name);
+        
+        setTopLocations(sortedLocations);
       } catch (error) {
         console.error('Error fetching initial data:', error);
       }
@@ -89,6 +107,16 @@ function Home() {
 
     fetchInitialData();
   }, []);
+
+  // Auto-scroll logic for carousel
+  useEffect(() => {
+    if (featuredProperties.length > 3) {
+      const timer = setInterval(() => {
+        setCarouselIndex(prev => (prev + 1) % (featuredProperties.length - 2));
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [featuredProperties]);
 
   const tabs = [
     { name: 'Buy', icon: HomeIcon },
@@ -369,11 +397,11 @@ function Home() {
             </div>
           </div>
 
-          {/* Quick Links */}
           <div className="flex flex-wrap justify-center gap-5 mt-12">
-            {['Sector 20, Panchkula', 'Phase 7, Mohali', 'Zirakpur', 'IT City Mohali', 'VIP Road'].map(loc => (
+            {topLocations.map(loc => (
               <button
                 key={loc}
+                onClick={() => navigate(`/properties?search=${loc}`)}
                 className="group flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-sm border border-slate-200/50 text-slate-600 text-xs font-semibold hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow"
               >
                 <MapPin className="w-3 h-3 transition-transform group-hover:scale-110" />
@@ -432,10 +460,37 @@ function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProperties.map((property, index) => (
-              <PropertyCard key={index} {...property} />
-            ))}
+          <div className="relative overflow-hidden">
+            <div 
+              className="flex transition-transform duration-1000 ease-in-out gap-8"
+              style={{ transform: `translateX(-${carouselIndex * (100 / (window.innerWidth > 1024 ? 3 : window.innerWidth > 768 ? 2 : 1)) }%)` }}
+            >
+              {featuredProperties.map((property, index) => (
+                <div key={index} className="min-w-full md:min-w-[calc(50%-16px)] lg:min-w-[calc(33.333%-22px)] flex-shrink-0">
+                  <div className="relative">
+                    {property.isPromoted && (
+                      <div className="absolute top-4 left-4 z-10 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-200 flex items-center gap-1.5 animate-pulse">
+                        <Zap className="w-3 h-3 fill-white" /> Featured Ad
+                      </div>
+                    )}
+                    <PropertyCard {...property} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Carousel Indicators */}
+            <div className="flex justify-center gap-2 mt-10">
+              {Array.from({ length: Math.max(0, featuredProperties.length - 2) }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCarouselIndex(i)}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    carouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>

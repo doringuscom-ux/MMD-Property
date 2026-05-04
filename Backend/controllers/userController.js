@@ -1,5 +1,9 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
+import OTP from '../models/otpModel.js';
+import { sendOTP } from '../utils/emailService.js';
+import cloudinary from '../utils/cloudinary.js';
+import fs from 'fs';
 
 // Generate JWT
 const generateToken = (id) => {
@@ -35,6 +39,7 @@ export const authUser = async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            phone: user.phone,
             role: user.role,
             token: token
         });
@@ -53,10 +58,64 @@ export const logoutUser = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
+// @desc    Send OTP to email
+// @route   POST /api/users/send-otp
+export const sendOTPRequest = async (req, res) => {
+    const { email, isRegistration } = req.body;
+
+    if (process.env.WORKING_STATUS !== 'done') {
+        return res.status(403).json({ message: 'OTP Service is temporarily disabled for maintenance.' });
+    }
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Check if user already exists (only for registration)
+    if (isRegistration) {
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+    }
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    try {
+        // Save OTP to DB
+        await OTP.findOneAndUpdate(
+            { email },
+            { otp, createdAt: new Date() },
+            { upsert: true, new: true }
+        );
+
+        // Send Email
+        const emailSent = await sendOTP(email, otp);
+        if (emailSent) {
+            res.json({ message: 'OTP sent successfully' });
+        } else {
+            res.status(500).json({ message: 'Failed to send OTP' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register a new user
 // @route   POST /api/users
 export const registerUser = async (req, res) => {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, otp } = req.body;
+
+    if (!otp) {
+        return res.status(400).json({ message: 'OTP is required' });
+    }
+
+    // Verify OTP
+    const otpRecord = await OTP.findOne({ email, otp });
+    if (!otpRecord) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -70,19 +129,145 @@ export const registerUser = async (req, res) => {
         email,
         password,
         phone,
-        role: 'user' // Default to user
+        role: 'user',
+        isVerified: true // Mark as verified if OTP matches
     });
 
     if (user) {
+        // Delete OTP after successful registration
+        await OTP.deleteOne({ email });
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
+            phone: user.phone,
             role: user.role,
             token: generateToken(user._id)
         });
     } else {
         res.status(400).json({ message: 'Invalid user data' });
+    }
+};
+
+// @desc    Get user profile
+// @route   GET /api/users/profile
+export const getUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role
+        });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+export const updateUserProfile = async (req, res) => {
+    const { name, email, phone, password, otp } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If email or password is being changed, verify OTP or Old Password
+    if ((email && email !== user.email) || password) {
+        let isVerified = false;
+
+        // Option 1: Verify with Old Password (for password change only)
+        if (password && req.body.oldPassword) {
+            const isMatch = await user.matchPassword(req.body.oldPassword);
+            if (isMatch) {
+                isVerified = true;
+            } else {
+                return res.status(400).json({ message: 'Incorrect old password' });
+            }
+        }
+
+        // Option 2: Verify with OTP (if not already verified by old password)
+        if (!isVerified) {
+            if (!otp) {
+                return res.status(400).json({ message: 'OTP or Old Password is required to change settings' });
+            }
+            
+            const verifyEmail = (email && email !== user.email) ? email : user.email;
+            const otpRecord = await OTP.findOne({ email: verifyEmail, otp });
+            
+            if (!otpRecord) {
+                return res.status(400).json({ message: 'Invalid or expired OTP' });
+            }
+            await OTP.deleteOne({ email: verifyEmail });
+        }
+
+        // Apply changes
+        if (email && email !== user.email) {
+            const emailTaken = await User.findOne({ email });
+            if (emailTaken) {
+                return res.status(400).json({ message: 'Email already in use' });
+            }
+            user.email = email;
+        }
+
+        if (password) {
+            user.password = password;
+        }
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+        avatar: updatedUser.avatar,
+        token: generateToken(updatedUser._id)
+    });
+};
+
+// @desc    Upload user avatar
+// @route   POST /api/users/avatar
+export const uploadAvatar = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Please upload an image' });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'mmd_avatars',
+            width: 150,
+            crop: "scale"
+        });
+
+        // Delete local file
+        fs.unlinkSync(req.file.path);
+
+        // Update user
+        user.avatar = result.secure_url;
+        await user.save();
+
+        res.json({
+            message: 'Profile image updated',
+            avatar: user.avatar
+        });
+    } catch (error) {
+        console.error('Avatar Upload Error:', error);
+        res.status(500).json({ message: error.message });
     }
 };
 

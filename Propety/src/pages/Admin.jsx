@@ -14,6 +14,8 @@ import AdminToast from '../components/admin/AdminToast';
 import AdminCategories from '../components/admin/AdminCategories';
 import AdminPropertyDetails from '../components/admin/AdminPropertyDetails';
 import AdminUsers from '../components/admin/AdminUsers';
+import AdminEnquiries from '../components/admin/AdminEnquiries';
+import AdminEnquiryModal from '../components/admin/AdminEnquiryModal';
 // ----------------------------------------------------------------------
 // Helper: Format price in Cr/Lakhs
 const formatPrice = (price) => {
@@ -34,6 +36,8 @@ const Admin = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [enquiries, setEnquiries] = useState([]);
+  const [usersCount, setUsersCount] = useState(0);
 
   // Modal & form state
   const [showModal, setShowModal] = useState(false);
@@ -49,6 +53,7 @@ const Admin = () => {
 
   // Delete confirmation modal
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null });
+  const [selectedEnquiryId, setSelectedEnquiryId] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -102,6 +107,44 @@ const Admin = () => {
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
+  const fetchEnquiries = useCallback(async () => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/enquiries?pageSize=5`, {
+        headers: { 'Authorization': `Bearer ${userInfo?.token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEnquiries(data.enquiries || []);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEnquiries();
+  }, [fetchEnquiries]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${userInfo?.token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsersCount(data.length || 0);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   // ----------------------------------------------------------------------
   // Toast notification
@@ -197,8 +240,8 @@ const Admin = () => {
     e.preventDefault();
     setFormLoading(true);
 
-    if (!formData.title || !formData.price || !formData.location) {
-      showToast('error', 'Title, Price & Location are required');
+    if (!formData.title || !formData.price) {
+      showToast('error', 'Title & Price are required');
       setFormLoading(false);
       return;
     }
@@ -264,7 +307,58 @@ const Admin = () => {
     }
   };
 
+  const handleEnquiryStatusUpdate = async (id, status) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/enquiries/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userInfo?.token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      if (response.ok) {
+        showToast('success', `Enquiry marked as ${status}`);
+        fetchEnquiries();
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Failed to update enquiry');
+    }
+  };
+
+  const handleEnquiryDelete = async (id) => {
+    if (!window.confirm('Delete this enquiry?')) return;
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/enquiries/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${userInfo?.token}` }
+      });
+      if (response.ok) {
+        showToast('success', 'Enquiry deleted');
+        setSelectedEnquiryId(null);
+        fetchEnquiries();
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Failed to delete');
+    }
+  };
+
   const handleNotificationAction = async (notification) => {
+    if (notification.type === 'EnquiryAdded') {
+      // Find enquiry ID from message if not directly in notification (or we might need to add it to backend)
+      // For now, if we don't have it, we just go to the tab. 
+      // But ideally we'd have notification.enquiryId
+      setActiveTab('Enquiries');
+      if (notification.enquiry) {
+        setSelectedEnquiryId(notification.enquiry);
+      }
+      return;
+    }
+
     if (notification.property) {
       const propertyId = typeof notification.property === 'object' ? notification.property._id : notification.property;
       try {
@@ -342,7 +436,8 @@ const Admin = () => {
   // Filter & Pagination
   const filteredProperties = properties.filter(p => {
     const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.location?.toLowerCase().includes(searchTerm.toLowerCase());
+                         p.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         p.propertyId?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'All Status' || p.adminStatus === statusFilter;
     
@@ -387,7 +482,15 @@ const Admin = () => {
           <AdminToast message={message} />
 
           {activeTab === 'Dashboard' ? (
-            <DashboardOverview properties={properties} formatPrice={formatPrice} />
+            <DashboardOverview 
+              properties={properties} 
+              enquiries={enquiries} 
+              usersCount={usersCount} 
+              formatPrice={formatPrice} 
+              onEnquiryClick={(id) => {
+                setSelectedEnquiryId(id);
+              }}
+            />
           ) : activeTab === 'Categories' ? (
             <AdminCategories properties={properties} />
           ) : activeTab === 'Properties' ? (
@@ -438,6 +541,12 @@ const Admin = () => {
             </>
           ) : activeTab === 'Users' ? (
             <AdminUsers showToast={showToast} />
+          ) : activeTab === 'Enquiries' ? (
+            <AdminEnquiries 
+              showToast={showToast} 
+              preSelectedId={selectedEnquiryId} 
+              onViewDetail={(id) => setSelectedEnquiryId(id)}
+            />
           ) : (
              <div className="flex flex-col items-center justify-center h-full text-center p-8">
                 <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
@@ -467,6 +576,13 @@ const Admin = () => {
         deleteConfirm={deleteConfirm}
         setDeleteConfirm={setDeleteConfirm}
         handleDelete={handleDelete}
+      />
+
+      <AdminEnquiryModal 
+        enquiry={enquiries.find(e => e._id === selectedEnquiryId)}
+        onClose={() => setSelectedEnquiryId(null)}
+        onUpdateStatus={handleEnquiryStatusUpdate}
+        onDelete={handleEnquiryDelete}
       />
 
       <style>{`

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Home, Search, Building2, MapPin, ChevronRight, 
-  User, LogOut, Heart, List, ChevronDown, Phone 
+  User, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings 
 } from 'lucide-react';
 import logoImg from '../assets/NewLogo.png';
 import { BASE_URL } from '../api';
@@ -138,6 +138,18 @@ const Navbar = ({ isSolid = false }) => {
                             <Heart className="w-4 h-4" />
                           </div>
                           Saved Properties
+                        </Link>
+                        <Link to="/my-enquiries" onClick={() => setIsProfileOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white shadow-sm transition-all">
+                            <MessageSquare className="w-4 h-4" />
+                          </div>
+                          My Enquiries
+                        </Link>
+                        <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-sm text-left group">
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white shadow-sm transition-all">
+                            <Settings className="w-4 h-4" />
+                          </div>
+                          Manage Profile
                         </Link>
                         <div className="h-px bg-slate-50 my-2 mx-4" />
                         <button 
@@ -288,6 +300,18 @@ const Navbar = ({ isSolid = false }) => {
                       <Heart className="w-5 h-5" />
                     </div>
                     <span className="font-bold">Saved Properties</span>
+                  </Link>
+                  <Link to="/my-enquiries" onClick={() => setIsOpen(false)} className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
+                    <div className="p-2 rounded-xl bg-white shadow-sm group-hover:text-blue-600">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold">My Enquiries</span>
+                  </Link>
+                  <Link to="/profile" onClick={() => setIsOpen(false)} className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-blue-50 transition-all group">
+                    <div className="p-2 rounded-xl bg-white shadow-sm group-hover:text-blue-600">
+                      <Settings className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold">Manage Profile</span>
                   </Link>
                   <button 
                     onClick={handleLogout}

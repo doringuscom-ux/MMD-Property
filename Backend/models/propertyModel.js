@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const propertySchema = mongoose.Schema({
+    propertyId: {
+        type: String,
+        unique: true
+    },
     title: {
         type: String,
         required: true
@@ -15,7 +19,7 @@ const propertySchema = mongoose.Schema({
     },
     location: {
         type: String,
-        required: true
+        required: false
     },
     city: {
         type: String,
@@ -90,9 +94,26 @@ const propertySchema = mongoose.Schema({
     isVerified: {
         type: Boolean,
         default: false
+    },
+    isPromoted: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true
+});
+
+// Generate unique propertyId before saving
+propertySchema.pre('save', async function () {
+    if (!this.propertyId) {
+        // Generate a random 8 character hex-like ID
+        const chars = '0123456789ABCDEF';
+        let id = '';
+        for (let i = 0; i < 8; i++) {
+            id += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        this.propertyId = id;
+    }
 });
 
 const Property = mongoose.model('Property', propertySchema);

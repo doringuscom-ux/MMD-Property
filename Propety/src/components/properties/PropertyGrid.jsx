@@ -41,10 +41,10 @@ const PropertyGrid = ({
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 mb-2">{property.title}</h3>
                   <div className="flex items-center gap-2 text-slate-400 text-sm font-medium mb-6">
-                    <MapPin className="w-4 h-4 text-blue-500" /> {property.location}{property.city ? `, ${property.city}` : ''}
+                    <MapPin className="w-4 h-4 text-blue-500" /> {property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}
                   </div>
                   <p className="text-slate-500 text-sm leading-relaxed mb-auto">
-                    Experience premium living in this meticulously designed {property.title} located in the heart of {property.location}. Features high-end finishes and modern amenities.
+                    Experience premium living in this meticulously designed {property.title} located in the heart of {property.location || property.city}. Features high-end finishes and modern amenities.
                   </p>
                   <div className="flex items-center justify-between pt-6 border-t border-slate-50">
                     <div className="text-3xl font-black text-blue-600">₹{property.price}</div>

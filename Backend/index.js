@@ -8,6 +8,8 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import enquiryRoutes from './routes/enquiryRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -27,6 +29,8 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Heartbeat / Ping Route
 app.get('/ping', (req, res) => {
@@ -38,20 +42,31 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
+app.get('/api/status', (req, res) => {
+    res.json({ status: process.env.WORKING_STATUS || 'pending' });
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     
-    // Heartbeat Logic: Pings the server every 14 minutes to prevent Render sleep mode
+    // Heartbeat Logic: Pings the server every 10 minutes to prevent Render sleep mode
     if (process.env.NODE_ENV === 'production') {
         const URL = 'https://mmd-property.onrender.com/ping';
+        console.log(`\n💓 [Heartbeat] Service initialized. Pinging ${URL} every 10 minutes.`);
+        
         setInterval(() => {
             https.get(URL, (res) => {
-                console.log(`Heartbeat status: ${res.statusCode}`);
+                const timestamp = new Date().toLocaleString();
+                if (res.statusCode === 200) {
+                    console.log(`✅ [Heartbeat] Ping successful at ${timestamp}`);
+                } else {
+                    console.log(`⚠️ [Heartbeat] Ping returned status ${res.statusCode} at ${timestamp}`);
+                }
             }).on('error', (e) => {
-                console.error(`Heartbeat error: ${e.message}`);
+                console.error(`❌ [Heartbeat] Ping failed at ${new Date().toLocaleString()}: ${e.message}`);
             });
-        }, 14 * 60 * 1000); // 14 minutes
+        }, 10 * 60 * 1000); // 10 minutes
     }
 });

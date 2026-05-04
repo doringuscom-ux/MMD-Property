@@ -1,5 +1,6 @@
 import Property from '../models/propertyModel.js';
 import Notification from '../models/notificationModel.js';
+import { sendNotification } from '../utils/emailService.js';
 
 // @desc    Fetch all properties
 // @route   GET /api/properties
@@ -11,6 +12,7 @@ export const getProperties = async (req, res) => {
 
         const keyword = req.query.keyword ? {
             $or: [
+                { propertyId: { $regex: req.query.keyword, $options: 'i' } },
                 { title: { $regex: req.query.keyword, $options: 'i' } },
                 { location: { $regex: req.query.keyword, $options: 'i' } },
                 { city: { $regex: req.query.keyword, $options: 'i' } }
@@ -72,7 +74,7 @@ export const getProperties = async (req, res) => {
         const properties = await Property.find(query)
             .limit(pageSize)
             .skip(pageSize * (page - 1))
-            .sort({ createdAt: -1 })
+            .sort({ isPromoted: -1, createdAt: -1 })
             .populate('postedBy', 'name email role')
             .populate('updatedBy', 'name email role');
 
@@ -132,12 +134,39 @@ export const createProperty = async (req, res) => {
 
         // Create notification for admin if a regular user posts
         if (!isAdmin) {
+            const msg = `New property listing added by ${req.user.name}: ${createdProperty.title}`;
             await Notification.create({
                 user: req.user._id,
                 property: createdProperty._id,
-                message: `New property listing added by ${req.user.name}: ${createdProperty.title}`,
+                message: msg,
                 type: 'PropertyAdded'
             });
+
+            // Send Email Notification
+            const subject = `MMD Alert: New Property Listing [${createdProperty.propertyId}]`;
+            const htmlContent = `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 0; color: #333; background-color: #f0f9ff; border-radius: 20px; overflow: hidden; border: 1px solid #bae6fd; max-width: 600px;">
+                    <div style="background-color: #0c4a6e; padding: 25px; text-align: center;">
+                        <h2 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">Maa Mansa Devi Property</h2>
+                        <p style="color: #7dd3fc; margin: 5px 0 0; font-size: 12px; text-transform: uppercase; font-weight: bold;">New Property For Approval</p>
+                    </div>
+                    <div style="padding: 30px; background-color: #ffffff;">
+                        <h3 style="margin: 0 0 15px; color: #0c4a6e; font-size: 20px;">${createdProperty.title}</h3>
+                        <div style="background-color: #f8fafc; padding: 15px; border-radius: 15px; border-left: 4px solid #0ea5e9;">
+                            <p style="margin: 5px 0;"><strong>Property ID:</strong> ${createdProperty.propertyId}</p>
+                            <p style="margin: 5px 0;"><strong>Posted By:</strong> ${req.user.name} (${req.user.email})</p>
+                            <p style="margin: 5px 0;"><strong>Price:</strong> ₹${createdProperty.price}</p>
+                            <p style="margin: 5px 0;"><strong>Location:</strong> ${createdProperty.location}, ${createdProperty.city}</p>
+                            ${createdProperty.mapLink ? `<p style="margin: 5px 0;"><strong>Map Link:</strong> <a href="${createdProperty.mapLink.match(/src="([^"]+)"/)?.[1] || createdProperty.mapLink}" style="color: #0ea5e9; font-weight: bold;">View on Google Maps</a></p>` : ''}
+                        </div>
+                        <p style="margin-top: 20px; color: #64748b; font-size: 13px;">Please review and approve this listing from the admin panel to make it live.</p>
+                    </div>
+                    <div style="padding: 20px; text-align: center; background-color: #f0f9ff; border-top: 1px solid #bae6fd;">
+                        <p style="margin: 0; font-size: 11px; color: #0c4a6e;">&copy; 2026 Maa Mansa Devi Property Management System</p>
+                    </div>
+                </div>
+            `;
+            sendNotification(subject, htmlContent);
         }
 
         res.status(201).json(createdProperty);
@@ -180,12 +209,27 @@ export const updateProperty = async (req, res) => {
 
             // Create notification for admin if a regular user updates
             if (!isAdmin) {
+                const msg = `Property listing updated by ${req.user.name}: ${updatedProperty.title}`;
                 await Notification.create({
                     user: req.user._id,
                     property: updatedProperty._id,
-                    message: `Property listing updated by ${req.user.name}: ${updatedProperty.title}`,
+                    message: msg,
                     type: 'PropertyUpdated'
                 });
+
+                // Send Email Notification
+                const subject = `Property Listing Updated: ${updatedProperty.title}`;
+                const htmlContent = `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                        <h2 style="color: #2563eb;">Property Listing Updated</h2>
+                        <p><strong>Title:</strong> ${updatedProperty.title}</p>
+                        <p><strong>Updated By:</strong> ${req.user.name} (${req.user.email})</p>
+                        <p><strong>Current Status:</strong> ${updatedProperty.adminStatus}</p>
+                        <hr>
+                        <p style="font-size: 12px; color: #666;">This listing has been moved back to 'Pending' status and requires review.</p>
+                    </div>
+                `;
+                sendNotification(subject, htmlContent);
             }
 
             res.json(updatedProperty);

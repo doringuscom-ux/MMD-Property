@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, ArrowRight, Building2, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, ArrowRight, Building2, CheckCircle2, XCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../api';
+import { useAppStatus } from '../hooks/useAppStatus';
 
 const Signup = () => {
+  const { isDone } = useAppStatus();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -11,11 +13,51 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [message, setMessage] = useState('');
   
   const navigate = useNavigate();
 
+  const handleSendOTP = async () => {
+    if (!email) {
+      setError('Please enter your email first');
+      return;
+    }
+    setOtpLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await fetch(`${BASE_URL}/users/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsOtpSent(true);
+        setMessage('OTP sent to your email!');
+      } else {
+        setError(data.message || 'Failed to send OTP');
+      }
+    } catch (err) {
+      setError('Server error. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (!isOtpSent) {
+      setError('Please verify your email with OTP first');
+      return;
+    }
     setIsLoading(true);
     setError('');
 
@@ -23,13 +65,12 @@ const Signup = () => {
       const response = await fetch(`${BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, password })
+        body: JSON.stringify({ name, email, phone, password, otp })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Automatically login the user or redirect to login
         localStorage.setItem('userInfo', JSON.stringify(data));
         navigate('/');
       } else {
@@ -108,6 +149,12 @@ const Signup = () => {
                  </div>
               )}
 
+              {message && (
+                 <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-sm font-bold flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5" /> {message}
+                 </div>
+              )}
+
               <form onSubmit={handleSignup} className="space-y-5">
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -128,17 +175,47 @@ const Signup = () => {
 
                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
-                    <div className="relative group">
-                       <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
-                       <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
+                    <div className="flex gap-3">
+                      <div className="relative group flex-1">
+                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                        <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
+                      </div>
+                      {isDone && (
+                        <button 
+                          type="button"
+                          onClick={handleSendOTP}
+                          disabled={otpLoading || isOtpSent}
+                          className="px-4 rounded-2xl bg-emerald-600 text-white text-[10px] font-black hover:bg-emerald-700 transition-all disabled:bg-slate-200 disabled:text-slate-400 min-w-[80px]"
+                        >
+                          {otpLoading ? '...' : isOtpSent ? 'Sent' : 'Get OTP'}
+                        </button>
+                      )}
                     </div>
+                    {!isDone && (
+                      <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100 text-[10px] font-bold text-amber-700">
+                         <AlertCircle className="w-4 h-4" /> Registration is temporarily disabled for maintenance.
+                      </div>
+                    )}
                  </div>
+
+                 {isOtpSent && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Enter OTP</label>
+                      <div className="relative group">
+                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                        <input required type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="6-digit OTP" className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm tracking-[0.5em] text-center" />
+                      </div>
+                    </div>
+                 )}
 
                  <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Password</label>
                     <div className="relative group">
                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
-                       <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
+                       <input required type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" className="w-full pl-14 pr-14 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
+                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors">
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                       </button>
                     </div>
                  </div>
 
@@ -156,7 +233,7 @@ const Signup = () => {
                    {isLoading ? (
                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                    ) : (
-                     <>Create Free Account <ArrowRight className="w-5 h-5" /></>
+                     <>Verify & Register <ArrowRight className="w-5 h-5" /></>
                    )}
                  </button>
               </form>

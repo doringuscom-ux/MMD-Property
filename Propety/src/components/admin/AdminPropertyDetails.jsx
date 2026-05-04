@@ -72,7 +72,7 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
                   <h2 className="text-3xl font-black text-slate-900">{property.title}</h2>
                   <div className="flex items-center gap-2 text-slate-500 font-medium">
                      <MapPin className="w-4 h-4 text-blue-500" />
-                     <span>{property.location}{property.city ? `, ${property.city}` : ''}</span>
+                     <span>{property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}</span>
                   </div>
                </div>
                <div className="text-right">
@@ -132,7 +132,7 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
                        {[
-                         { label: 'Property ID', value: `#PROP${property._id?.slice(-4)}` },
+                         { label: 'Property ID', value: `#${property.propertyId || property._id?.slice(-4)}` },
                          { label: 'Status', value: property.status },
                          { label: 'Ready Status', value: property.readyStatus || 'Ready to Move' },
                          { label: 'Furnishing', value: property.furnishing || 'Unfurnished' },
@@ -140,6 +140,9 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
                          { label: 'Floor', value: property.floor || 'None' },
                          { label: 'Built Year', value: property.builtYear || '-' },
                          { label: 'Area', value: `${property.area || '0'} Sq Ft` },
+                         { label: 'Map Link', value: property.mapLink ? (
+                           <a href={property.mapLink.match(/src="([^"]+)"/)?.[1] || property.mapLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Open Map</a>
+                         ) : 'Not Provided' },
                        ].map((item, i) => (
                          <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
@@ -202,7 +205,7 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
               <h3 className="text-lg font-black text-slate-900">Property Overview</h3>
               <div className="space-y-4">
                  {[
-                   { label: 'Property ID', value: `#PROP${property._id?.slice(-4)}` },
+                   { label: 'Property ID', value: `#${property.propertyId || property._id?.slice(-4)}` },
                    { label: 'Ready Status', value: property.readyStatus || 'Ready', color: 'text-emerald-600 bg-emerald-50' },
                    { label: 'Category', value: property.propertyType },
                    { label: 'Location', value: property.location.split(',')[0] },

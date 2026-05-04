@@ -5,6 +5,7 @@ import {
   Phone, Mail, MapPin, Clock, Send, MessageSquare, 
   ChevronRight, Globe
 } from 'lucide-react';
+import { BASE_URL } from '../api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -21,16 +22,40 @@ const Contact = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
-    // Simulate API call
-    setTimeout(() => {
+    setSuccess(false);
+
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+
+    try {
+      const response = await fetch(`${BASE_URL}/enquiries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': userInfo ? `Bearer ${userInfo.token}` : ''
+        },
+        body: JSON.stringify({
+          ...formData,
+          message: formData.subject ? `[${formData.subject}] ${formData.message}` : formData.message
+        })
+      });
+
+      if (response.ok) {
+        setSuccess(true);
+        setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+        setTimeout(() => setSuccess(false), 5000);
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Contact error:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
       setSending(false);
-      setSuccess(true);
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-      setTimeout(() => setSuccess(false), 5000);
-    }, 2000);
+    }
   };
 
   const contactInfo = [

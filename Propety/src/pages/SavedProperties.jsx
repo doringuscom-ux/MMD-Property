@@ -138,7 +138,7 @@ const SavedProperties = () => {
                   <div className="space-y-2">
                     <h3 className="text-xl font-black text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors">{prop.title}</h3>
                     <p className="flex items-center gap-1.5 text-slate-400 text-sm font-bold">
-                      <MapPin className="w-4 h-4 text-blue-500" /> {prop.location}{prop.city ? `, ${prop.city}` : ''}
+                      <MapPin className="w-4 h-4 text-blue-500" /> {prop.location ? (prop.city ? `${prop.location}, ${prop.city}` : prop.location) : (prop.city || '')}
                     </p>
                   </div>
 

@@ -198,7 +198,7 @@ const AdminPropertyTable = ({
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-black text-slate-900 truncate max-w-[200px]">{property.title}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">#PROP{property._id?.slice(-4)}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">#{property.propertyId || property._id?.slice(-4)}</p>
                       </div>
                     </div>
                   </td>
@@ -206,7 +206,7 @@ const AdminPropertyTable = ({
                     <div className="flex items-center gap-2 text-slate-500">
                       <MapPin className="w-3.5 h-3.5 text-blue-500" />
                       <span className="text-xs font-bold truncate max-w-[150px]">
-                        {property.location}{property.city ? `, ${property.city}` : ''}
+                        {property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}
                       </span>
                     </div>
                   </td>
