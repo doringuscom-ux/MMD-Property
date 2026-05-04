@@ -42,7 +42,7 @@ export const createEnquiry = async (req, res) => {
       });
 
       // Send Email Notification
-      const subject = `MMD Alert: New Enquiry [${propertyIdStr}] from ${name}`;
+      const subject = `MMD Alert: New Enquiry ${propertyIdStr} from ${name}`;
       const htmlContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 0; color: #333; background-color: #f8fafc; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; max-width: 600px;">
           <div style="background-color: #0f172a; padding: 25px; text-align: center;">
@@ -52,7 +52,7 @@ export const createEnquiry = async (req, res) => {
           <div style="padding: 30px; background-color: #ffffff;">
             <div style="margin-bottom: 25px; border-bottom: 2px solid #f1f5f9; pb: 15px;">
               <p style="margin: 0; color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase;">Property Context</p>
-              <h3 style="margin: 5px 0; color: #2563eb; font-size: 18px;">${propertyIdStr}</h3>
+              <h3 style="margin: 5px 0; color: #2563eb; font-size: 18px; font-weight: bold;">${propertyIdStr}</h3>
             </div>
             
             <div style="display: grid; gap: 15px;">

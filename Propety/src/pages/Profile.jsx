@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { User, Mail, Phone, Lock, Save, Camera, ShieldCheck, CheckCircle2, XCircle, Key, Eye, EyeOff, Loader2, Image as ImageIcon, X, RefreshCw } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, Camera, ShieldCheck, CheckCircle2, XCircle, Key, Eye, EyeOff, Loader2, Image as ImageIcon, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { BASE_URL } from '../api';
 import { useAppStatus } from '../hooks/useAppStatus';
 

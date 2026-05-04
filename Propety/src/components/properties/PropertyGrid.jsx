@@ -12,8 +12,8 @@ const PropertyGrid = ({
 }) => {
   if (loading && properties.length === 0) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex-1 flex justify-center items-center min-h-[400px] py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
   }
@@ -21,8 +21,8 @@ const PropertyGrid = ({
   return (
     <div className="flex-1 relative">
       {loading && properties.length > 0 && (
-        <div className="absolute inset-0 z-20 bg-slate-50/40 backdrop-blur-[1px] flex justify-center items-start pt-32 pointer-events-none">
-          <div className="sticky top-60 animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="absolute inset-0 z-20 bg-slate-50/40 backdrop-blur-[1px] flex justify-center items-center pointer-events-none">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 border-t-transparent"></div>
         </div>
       )}
 

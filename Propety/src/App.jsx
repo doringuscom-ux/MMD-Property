@@ -11,6 +11,7 @@ import SavedProperties from './pages/SavedProperties';
 import Contact from './pages/Contact';
 import MyEnquiries from './pages/MyEnquiries';
 import Profile from './pages/Profile';
+import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -35,6 +36,9 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
