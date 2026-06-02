@@ -16,6 +16,7 @@ import AdminPropertyDetails from '../components/admin/AdminPropertyDetails';
 import AdminUsers from '../components/admin/AdminUsers';
 import AdminEnquiries from '../components/admin/AdminEnquiries';
 import AdminEnquiryModal from '../components/admin/AdminEnquiryModal';
+import AdminBlog from '../components/admin/AdminBlog';
 // ----------------------------------------------------------------------
 // Helper: Format price in Cr/Lakhs
 const formatPrice = (price) => {
@@ -74,7 +75,8 @@ const Admin = () => {
     facing: 'None',
     builtYear: new Date().getFullYear(),
     readyStatus: 'Ready to Move',
-    premiumFeatures: ''
+    premiumFeatures: '',
+    showPosterContact: false
   });
 
   // ----------------------------------------------------------------------
@@ -156,12 +158,13 @@ const Admin = () => {
   // ----------------------------------------------------------------------
   // Form handlers
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
     // Handle nested objects like coordinates
     if (name === 'coordinates') {
-        setFormData(prev => ({ ...prev, coordinates: value }));
+        setFormData(prev => ({ ...prev, coordinates: val }));
     } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: val }));
     }
   };
 
@@ -202,7 +205,8 @@ const Admin = () => {
       readyStatus: 'Ready to Move',
       premiumFeatures: '',
       city: 'Chandigarh',
-      coordinates: { lat: '', lng: '' }
+      coordinates: { lat: '', lng: '' },
+      showPosterContact: false
     });
     setShowModal(true);
   };
@@ -229,7 +233,8 @@ const Admin = () => {
       readyStatus: property.readyStatus || 'Ready to Move',
       premiumFeatures: property.premiumFeatures || '',
       city: property.city || 'Chandigarh',
-      coordinates: property.coordinates || { lat: '', lng: '' }
+      coordinates: property.coordinates || { lat: '', lng: '' },
+      showPosterContact: property.showPosterContact || false
     });
     setShowModal(true);
   };
@@ -279,6 +284,31 @@ const Admin = () => {
       showToast('error', 'Something went wrong.');
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------
+  // Status change handler
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/properties/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userInfo?.token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (response.ok) {
+        showToast('success', 'Status updated successfully');
+        setProperties(properties.map(p => p._id === id ? { ...p, status: newStatus } : p));
+      } else {
+        showToast('error', 'Failed to update status');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Something went wrong');
     }
   };
 
@@ -514,39 +544,44 @@ const Admin = () => {
                   </div>
 
                   <AdminPropertyTable 
-                    properties={properties}
-                    loading={loading}
-                    paginatedProperties={paginatedProperties}
-                    formatPrice={formatPrice}
-                    openEditModal={openEditModal}
-                    confirmDelete={confirmDelete}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    setCurrentPage={setCurrentPage}
-                    onViewDetails={(prop) => setSelectedProperty(prop)}
-                    selectedIds={selectedIds}
-                    setSelectedIds={setSelectedIds}
-                    handleBulkAction={handleBulkAction}
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    statusFilter={statusFilter}
-                    setStatusFilter={setStatusFilter}
-                    categoryFilter={categoryFilter}
-                    setCategoryFilter={setCategoryFilter}
-                    itemsPerPage={itemsPerPage}
-                    setItemsPerPage={setItemsPerPage}
-                  />
+                properties={filteredProperties}
+                loading={loading}
+                paginatedProperties={paginatedProperties}
+                formatPrice={formatPrice}
+                openEditModal={openEditModal}
+                confirmDelete={confirmDelete}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                setCurrentPage={setCurrentPage}
+                onViewDetails={(prop) => setSelectedProperty(prop)}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
+                handleBulkAction={handleBulkAction}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
+                handleStatusChange={handleStatusChange}
+              />
                 </div>
               )}
             </>
           ) : activeTab === 'Users' ? (
             <AdminUsers showToast={showToast} />
+          ) : activeTab === 'Agents' ? (
+            <AdminUsers showToast={showToast} isAgentMode={true} />
           ) : activeTab === 'Enquiries' ? (
             <AdminEnquiries 
               showToast={showToast} 
               preSelectedId={selectedEnquiryId} 
               onViewDetail={(id) => setSelectedEnquiryId(id)}
             />
+          ) : activeTab === 'Blog' ? (
+            <AdminBlog showToast={showToast} />
           ) : (
              <div className="flex flex-col items-center justify-center h-full text-center p-8">
                 <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">

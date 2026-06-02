@@ -1,5 +1,6 @@
 import Property from '../models/propertyModel.js';
 import Notification from '../models/notificationModel.js';
+import User from '../models/userModel.js';
 import { sendNotification } from '../utils/emailService.js';
 
 // @desc    Fetch all properties
@@ -35,6 +36,10 @@ export const getProperties = async (req, res) => {
             ? { bedrooms: req.query.bedrooms === '5+' ? { $gte: 5 } : Number(req.query.bedrooms) }
             : {};
 
+        const postedBy = req.query.postedBy
+            ? { postedBy: req.query.postedBy }
+            : {};
+
         // Price logic
         let priceQuery = {};
         if (req.query.minPrice || req.query.maxPrice) {
@@ -68,15 +73,27 @@ export const getProperties = async (req, res) => {
             visibilityQuery = { adminStatus: 'Published' };
         }
 
-        const query = { ...keyword, ...city, ...propertyType, ...status, ...bedrooms, ...priceQuery, ...visibilityQuery };
+        const query = { ...keyword, ...city, ...propertyType, ...status, ...bedrooms, ...priceQuery, ...visibilityQuery, ...postedBy };
 
         const count = await Property.countDocuments(query);
-        const properties = await Property.find(query)
+        let properties = await Property.find(query)
             .limit(pageSize)
             .skip(pageSize * (page - 1))
             .sort({ isPromoted: -1, createdAt: -1 })
-            .populate('postedBy', 'name email role')
+            .populate('postedBy', 'name username email role phone avatar')
             .populate('updatedBy', 'name email role');
+            
+        // Fetch Admin for contact overriding
+        const adminUser = await User.findOne({ role: 'admin' }).select('name email role phone avatar');
+
+        properties = properties.map(prop => {
+            const propObj = prop.toObject();
+            if (!propObj.showPosterContact && adminUser && propObj.postedBy) {
+                propObj.postedBy.email = adminUser.email;
+                propObj.postedBy.phone = adminUser.phone;
+            }
+            return propObj;
+        });
 
         res.json({ properties, page, pages: Math.ceil(count / pageSize) });
     } catch (error) {
@@ -89,20 +106,31 @@ export const getProperties = async (req, res) => {
 // @access  Public
 export const getPropertyById = async (req, res) => {
     try {
-        const property = await Property.findById(req.params.id);
+        const property = await Property.findById(req.params.id)
+            .populate('postedBy', 'name username email role phone avatar')
+            .populate('updatedBy', 'name email role phone avatar');
         if (property) {
             // Check if property is published
             const isPublished = property.adminStatus === 'Published';
             
             // Check if user is Admin or Owner
             const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'sub-admin');
-            const isOwner = req.user && property.postedBy && property.postedBy.toString() === req.user._id.toString();
+            const isOwner = req.user && property.postedBy && property.postedBy._id && property.postedBy._id.toString() === req.user._id.toString();
 
             if (!isPublished && !isAdmin && !isOwner) {
                 return res.status(403).json({ message: 'This property is pending approval and can only be viewed by the owner or admin' });
             }
+            
+            const propObj = property.toObject();
+            if (!propObj.showPosterContact) {
+                const adminUser = await User.findOne({ role: 'admin' }).select('name email role phone avatar');
+                if (adminUser && propObj.postedBy) {
+                    propObj.postedBy.email = adminUser.email;
+                    propObj.postedBy.phone = adminUser.phone;
+                }
+            }
 
-            res.json(property);
+            res.json(propObj);
         } else {
             res.status(404).json({ message: 'Property not found' });
         }
@@ -117,6 +145,25 @@ export const getPropertyById = async (req, res) => {
 export const createProperty = async (req, res) => {
     try {
         const { title, description, price, location, propertyType, bedrooms, bathrooms, area } = req.body;
+
+        // If a regular user, check if they already posted a property this month
+        if (req.user.role === 'user') {
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+
+            const endOfMonth = new Date(startOfMonth);
+            endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+
+            const propertiesThisMonth = await Property.countDocuments({
+                postedBy: req.user._id,
+                createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+            });
+
+            if (propertiesThisMonth >= 1) {
+                return res.status(403).json({ message: 'You can only post 1 property per month. Upgrade to an Agent account for unlimited listings.' });
+            }
+        }
 
         // If a regular user posts, it stays unverified and pending
         const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
@@ -147,7 +194,7 @@ export const createProperty = async (req, res) => {
             const htmlContent = `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 0; color: #333; background-color: #f0f9ff; border-radius: 20px; overflow: hidden; border: 1px solid #bae6fd; max-width: 600px;">
                     <div style="background-color: #0c4a6e; padding: 25px; text-align: center;">
-                        <h2 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">Maa Mansa Devi Property</h2>
+                        <h2 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">Maa Mansa Property</h2>
                         <p style="color: #7dd3fc; margin: 5px 0 0; font-size: 12px; text-transform: uppercase; font-weight: bold;">New Property For Approval</p>
                     </div>
                     <div style="padding: 30px; background-color: #ffffff;">
@@ -162,7 +209,7 @@ export const createProperty = async (req, res) => {
                         <p style="margin-top: 20px; color: #64748b; font-size: 13px;">Please review and approve this listing from the admin panel to make it live.</p>
                     </div>
                     <div style="padding: 20px; text-align: center; background-color: #f0f9ff; border-top: 1px solid #bae6fd;">
-                        <p style="margin: 0; font-size: 11px; color: #0c4a6e;">&copy; 2026 Maa Mansa Devi Property Management System</p>
+                        <p style="margin: 0; font-size: 11px; color: #0c4a6e;">&copy; 2026 Maa Mansa Property Management System</p>
                     </div>
                 </div>
             `;
@@ -197,7 +244,10 @@ export const updateProperty = async (req, res) => {
                 req.body.isVerified = false;
             }
 
-            Object.assign(property, req.body);
+            const updateData = { ...req.body };
+            delete updateData.postedBy; // Prevent overwriting original owner
+
+            Object.assign(property, updateData);
             property.updatedBy = req.user._id;
 
             // If an admin is publishing, auto-verify
@@ -294,5 +344,34 @@ export const bulkDeleteProperties = async (req, res) => {
         res.json({ message: 'Properties deleted successfully' });
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+};
+
+// @desc    Quick update property status (e.g. to Sold) without resetting admin approval
+// @route   PUT /api/properties/:id/status
+// @access  Private (Owner/Admin)
+export const updatePropertyStatusQuick = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const property = await Property.findById(req.params.id);
+
+        if (!property) {
+            return res.status(404).json({ message: 'Property not found' });
+        }
+
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
+        const isOwner = property.postedBy && property.postedBy.toString() === req.user._id.toString();
+
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'Not authorized to change status of this property' });
+        }
+
+        property.status = status;
+        property.updatedBy = req.user._id;
+
+        const updatedProperty = await property.save();
+        res.json(updatedProperty);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };

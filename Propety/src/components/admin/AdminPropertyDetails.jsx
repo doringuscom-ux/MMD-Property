@@ -209,13 +209,15 @@ const AdminPropertyDetails = ({ property, onBack, formatPrice }) => {
                    { label: 'Ready Status', value: property.readyStatus || 'Ready', color: 'text-emerald-600 bg-emerald-50' },
                    { label: 'Category', value: property.propertyType },
                    { label: 'Location', value: property.location.split(',')[0] },
-                   { label: 'Added By', value: 'Admin', isAgent: true },
+                   { label: 'Added By', value: property.postedBy?.name || 'Admin', isAgent: true },
                  ].map((item, i) => (
                    <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
                       {item.isAgent ? (
                         <div className="flex items-center gap-2">
-                           <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">A</div>
+                           <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                              {item.value.charAt(0).toUpperCase()}
+                           </div>
                            <span className="text-sm font-black text-slate-900">{item.value}</span>
                         </div>
                       ) : (

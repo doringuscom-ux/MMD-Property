@@ -7,10 +7,9 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
     { id: 'Add Property', icon: Plus, label: 'Add Property' },
     { id: 'Categories', icon: LayoutGrid, label: 'Categories' },
     { id: 'Users', icon: Users, label: 'Users' },
+    { id: 'Agents', icon: UserCircle, label: 'Agents' },
     { id: 'Enquiries', icon: MessageSquare, label: 'Enquiries' },
-    { id: 'Blog', icon: Newspaper, label: 'Blog', comingSoon: true },
-    { id: 'Settings', icon: Settings, label: 'Settings', comingSoon: true },
-    { id: 'Reports', icon: BarChart3, label: 'Reports', comingSoon: true },
+    { id: 'Blog', icon: Newspaper, label: 'Blog' },
   ];
 
   const handleLogout = () => {
@@ -24,7 +23,7 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
           <Building2 className="w-6 h-6" />
         </div>
-        <span className="text-white font-black text-xl tracking-tight leading-tight">Maa Mansa Devi Property</span>
+        <span className="text-white font-black text-xl tracking-tight leading-tight">Maa Mansa Property</span>
       </div>
 
       <div className="px-4 py-2 mb-6">

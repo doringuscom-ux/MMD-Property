@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../api';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Star, ShieldCheck, ArrowUpRight, Eye, TrendingUp, Camera, Clock } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Star, ShieldCheck, ArrowUpRight, Eye, TrendingUp, Camera, Clock, CheckCircle } from 'lucide-react';
 
 const PropertyCard = ({
   image,
@@ -87,16 +87,24 @@ const PropertyCard = ({
       label: 'PREMIUM',
       pill: 'rounded-full'
     },
+    'Sold': {
+      color: 'from-red-600 to-red-500',
+      bg: 'bg-red-600',
+      icon: <CheckCircle className="w-3.5 h-3.5" />,
+      label: 'SOLD OUT',
+      pill: 'rounded-lg'
+    },
+    'Rented': {
+      color: 'from-indigo-600 to-indigo-500',
+      bg: 'bg-indigo-600',
+      icon: <CheckCircle className="w-3.5 h-3.5" />,
+      label: 'RENTED OUT',
+      pill: 'rounded-lg'
+    },
   };
   const config = typeConfig[type] || typeConfig['Premium'];
 
-  const formatPrice = (price) => {
-    if (!price) return '1.2 Cr';
-    const numPrice = parseFloat(price);
-    if (numPrice >= 10000000) return `${(numPrice / 10000000).toFixed(1)} Cr`;
-    if (numPrice >= 100000) return `${(numPrice / 100000).toFixed(1)} Lac`;
-    return price.toString();
-  };
+
 
   const nextImage = (e) => {
     e.stopPropagation();
@@ -175,7 +183,9 @@ const PropertyCard = ({
           <div>
             <p className="text-white/70 text-[9px] font-medium uppercase tracking-tight mb-0">Starting from</p>
             <div className="flex items-baseline gap-0.5">
-              <span className="text-white text-lg font-bold tracking-tight">₹{price}</span>
+              <span className="text-white text-lg font-bold tracking-tight">
+                {price === 'Price on Request' ? price : `₹${price}`}
+              </span>
             </div>
           </div>
           {rating && (
@@ -225,8 +235,10 @@ const PropertyCard = ({
 
         <div className="flex items-center justify-between mt-auto pt-1">
           <div className="flex flex-col">
-            <span className="text-[9px] text-gray-400 font-medium">Price</span>
-            <span className="text-md font-bold text-gray-900">₹{price}</span>
+            <span className="text-[10px] text-slate-400 font-medium">Price</span>
+            <span className="text-lg font-extrabold text-slate-900 tracking-tight">
+              {price === 'Price on Request' ? price : `₹${price}`}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 group-hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all duration-300 shadow-md shadow-blue-200">
             <span>View Details</span>

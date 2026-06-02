@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
+import { Phone, Mail, MapPin, ChevronRight, User } from 'lucide-react';
 
 import logoImg from '../assets/NewLogo.png';
 
@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="p-3 rounded-2xl bg-white shadow-xl">
                 <img src={logoImg} alt="Logo" className="h-[46px] w-auto" />
               </div>
-              <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Devi Property.</span>
+              <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Property.</span>
             </div>
 
 
@@ -63,20 +63,19 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Locations */}
+          {/* Agents */}
           <div>
-            <h4 className="text-lg font-bold mb-8">Our Locations</h4>
+            <h4 className="text-lg font-bold mb-8">Our Agents</h4>
             <ul className="space-y-4">
               {[
-                { city: 'Panchkula', area: 'Sector 6, Haryana' },
-                { city: 'Mohali', area: 'Phase 7, Punjab' },
-                { city: 'Zirakpur', area: 'VIP Road' }
-              ].map((loc) => (
-                <li key={loc.city} className="flex gap-3 text-slate-400">
-                  <MapPin className="w-5 h-5 text-blue-500 shrink-0" />
+                { label: 'Find an Agent', href: '/agents' },
+                { label: 'Join as an Agent', href: '/profile' },
+                { label: 'Agent Resources', href: '#' }
+              ].map((link) => (
+                <li key={link.label} className="flex gap-3 text-slate-400">
+                  <User className="w-5 h-5 text-blue-500 shrink-0" />
                   <div>
-                    <span className="block text-white font-semibold">{loc.city}</span>
-                    <span className="text-sm">{loc.area}</span>
+                    <a href={link.href} className="block text-white font-semibold hover:text-blue-400 transition-colors">{link.label}</a>
                   </div>
                 </li>
               ))}

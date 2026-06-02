@@ -74,6 +74,27 @@ const MyProperties = () => {
     }
   };
 
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/properties/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userInfo?.token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (response.ok) {
+        setProperties(properties.map(p => p._id === id ? { ...p, status: newStatus } : p));
+      } else {
+        alert('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Published':
@@ -184,9 +205,23 @@ const MyProperties = () => {
                       <Link to={`/property/${prop._id}`} className="p-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all">
                         <Eye className="w-4 h-4" />
                       </Link>
-                      <Link to={`/edit-property/${prop._id}`} className="p-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                      <Link to={`/edit-property/${prop._id}`} className="p-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all" title="Edit">
                         <Edit2 className="w-4 h-4" />
                       </Link>
+                      <select
+                        value={prop.status}
+                        onChange={(e) => handleStatusChange(prop._id, e.target.value)}
+                        className="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1 outline-none focus:border-blue-500 cursor-pointer"
+                        title="Change Status"
+                      >
+                        <option value="For Sale">For Sale</option>
+                        <option value="For Rent">For Rent</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="New Launch">New Launch</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Sold">Sold</option>
+                        <option value="Rented">Rented</option>
+                      </select>
                     </div>
                     <button 
                       onClick={() => handleDelete(prop._id)}

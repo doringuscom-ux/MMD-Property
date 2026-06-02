@@ -77,7 +77,7 @@ const Login = () => {
                  <span className="text-2xl font-black tracking-tight">MMD Property</span>
               </div>
               <h1 className="text-4xl font-black leading-tight mb-6">Experience the Next Level of <span className="text-blue-500">Real Estate</span> Management.</h1>
-              <p className="text-slate-400 font-medium leading-relaxed max-w-sm">Join thousands of property owners who trust Maa Mansa Devi Property for their premium real estate needs.</p>
+              <p className="text-slate-400 font-medium leading-relaxed max-w-sm">Join thousands of property owners who trust Maa Mansa Property for their premium real estate needs.</p>
            </div>
 
            <div className="relative z-10 mt-12">

@@ -74,10 +74,13 @@ const PropertyDetail = () => {
             ],
             features: data.premiumFeatures ? data.premiumFeatures.split(',').map(f => f.trim()).filter(f => f !== '') : [],
             agent: {
-              name: "Rakesh Saini",
-              role: "Senior Consultant",
-              phone: "+91 98765 43210",
-              image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+              id: data.postedBy?._id,
+              username: data.postedBy?.username,
+              name: data.postedBy?.name || "Property Owner",
+              role: data.postedBy?.role === 'admin' ? 'Administrator' : data.postedBy?.role === 'agent' ? 'Verified Agent' : 'Property Owner',
+              phone: data.postedBy?.phone || "Contact via form",
+              email: data.postedBy?.email,
+              image: data.postedBy?.avatar || "https://ui-avatars.com/api/?name=" + (data.postedBy?.name || "User") + "&background=0D8ABC&color=fff"
             },
             details: {
               "Property ID": data.propertyId || data._id.substring(0, 8).toUpperCase(),
@@ -364,14 +367,19 @@ const PropertyDetail = () => {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <button className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn">
-                        <Phone className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                      {property.agent.id && (property.agent.role === 'Verified Agent' || property.agent.role === 'Administrator') && (
+                        <Link to={`/agent/${property.agent.username || property.agent.id}`} className="w-full py-3 mb-2 rounded-2xl bg-blue-50 text-blue-600 font-black shadow-sm hover:bg-blue-100 transition-all flex items-center justify-center gap-2 group/profile">
+                           View Full Profile & Properties <ChevronRight className="w-4 h-4 group-hover/profile:translate-x-1 transition-transform" />
+                        </Link>
+                      )}
+                      <a href={`tel:${property.agent.phone}`} className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn block text-center">
+                        <Phone className="w-5 h-5 group-hover/btn:rotate-12 transition-transform inline" />
                         Call Now
-                      </button>
-                      <button className="w-full py-4 rounded-2xl bg-white border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn">
-                        <MessageSquare className="w-5 h-5 group-hover/btn:-translate-y-1 transition-transform" />
+                      </a>
+                      <a href={`https://wa.me/${property.agent.phone.replace(/\D/g,'')}?text=Hi, I am interested in your property: ${property.title}`} target="_blank" rel="noreferrer" className="w-full py-4 rounded-2xl bg-white border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn block text-center">
+                        <MessageSquare className="w-5 h-5 group-hover/btn:-translate-y-1 transition-transform inline" />
                         WhatsApp Inquiry
-                      </button>
+                      </a>
                     </div>
                     <form onSubmit={handleEnquirySubmit} className="mt-6 pt-6 border-t border-slate-100">
                       <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mb-4 text-center">Express Interest</p>

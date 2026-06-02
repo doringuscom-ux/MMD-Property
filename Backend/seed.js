@@ -38,9 +38,9 @@ const seedAdmins = async () => {
                 userExists.role = 'admin';
                 userExists.isVerified = true;
                 // If you want to update password, uncomment below:
-                // userExists.password = admin.password;
+                userExists.password = admin.password;
                 await userExists.save();
-                console.log(`Updated existing user to Admin: ${admin.email}`);
+                console.log(`Updated existing user to Admin with new password: ${admin.email}`);
             } else {
                 await User.create(admin);
                 console.log(`Created new Admin: ${admin.email}`);

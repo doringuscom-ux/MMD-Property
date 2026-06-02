@@ -83,7 +83,7 @@ export const sendOTPRequest = async (req, res) => {
         await OTP.findOneAndUpdate(
             { email },
             { otp, createdAt: new Date() },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         // Send Email
@@ -101,7 +101,7 @@ export const sendOTPRequest = async (req, res) => {
 // @desc    Register a new user
 // @route   POST /api/users
 export const registerUser = async (req, res) => {
-    const { name, email, password, phone, otp } = req.body;
+    const { name, email, password, phone, otp, username } = req.body;
 
     if (!otp) {
         return res.status(400).json({ message: 'OTP is required' });
@@ -111,6 +111,15 @@ export const registerUser = async (req, res) => {
     const otpRecord = await OTP.findOne({ email, otp });
     if (!otpRecord) {
         return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    if (!username) {
+        return res.status(400).json({ message: 'Username is required' });
+    }
+
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+        return res.status(400).json({ message: 'Username is already taken' });
     }
 
     const userExists = await User.findOne({ email });
@@ -125,6 +134,7 @@ export const registerUser = async (req, res) => {
         email,
         password,
         phone,
+        username,
         role: 'user',
         isVerified: true // Mark as verified if OTP matches
     });
@@ -138,6 +148,7 @@ export const registerUser = async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
+            username: user.username,
             role: user.role,
             token: generateToken(user._id)
         });
@@ -158,7 +169,9 @@ export const getUserProfile = async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
-            avatar: user.avatar
+            avatar: user.avatar,
+            experience: user.experience,
+            agentRequestStatus: user.agentRequestStatus
         });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -168,7 +181,7 @@ export const getUserProfile = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 export const updateUserProfile = async (req, res) => {
-    const { name, email, phone, password, otp } = req.body;
+    const { name, email, phone, password, otp, experience } = req.body;
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -213,9 +226,13 @@ export const updateUserProfile = async (req, res) => {
             user.email = email;
         }
 
-        if (password) {
-            user.password = password;
-        }
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (experience !== undefined) user.experience = experience;
+    } else {
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (experience !== undefined) user.experience = experience;
     }
 
     const updatedUser = await user.save();
@@ -227,6 +244,8 @@ export const updateUserProfile = async (req, res) => {
         phone: updatedUser.phone,
         role: updatedUser.role,
         avatar: updatedUser.avatar,
+        experience: updatedUser.experience,
+        agentRequestStatus: updatedUser.agentRequestStatus,
         token: generateToken(updatedUser._id)
     });
 };
@@ -260,7 +279,7 @@ export const uploadAvatar = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { avatar: result.secure_url },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         res.json({
@@ -276,8 +295,59 @@ export const uploadAvatar = async (req, res) => {
 // @desc    Get all users (Admin only)
 // @route   GET /api/users
 export const getUsers = async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
+    try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const users = await User.aggregate([
+            {
+                $lookup: {
+                    from: "properties",
+                    localField: "_id",
+                    foreignField: "postedBy",
+                    as: "userProperties"
+                }
+            },
+            {
+                $addFields: {
+                    propertyCount: { $size: "$userProperties" },
+                    propertiesPostedThisMonth: {
+                        $size: {
+                            $filter: {
+                                input: "$userProperties",
+                                as: "prop",
+                                cond: { $gte: ["$$prop.createdAt", startOfMonth] }
+                            }
+                        }
+                    },
+                    propertiesSoldThisMonth: {
+                        $size: {
+                            $filter: {
+                                input: "$userProperties",
+                                as: "prop",
+                                cond: { 
+                                    $and: [
+                                        { $eq: ["$$prop.status", "Sold"] },
+                                        { $gte: ["$$prop.updatedAt", startOfMonth] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    password: 0,
+                    userProperties: 0
+                }
+            }
+        ]);
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // @desc    Update user role (Admin only)
@@ -294,6 +364,109 @@ export const updateUserRole = async (req, res) => {
     }
 };
 
+
+// @desc    Get public agents directory
+// @route   GET /api/users/public/agents
+export const getAgentsPublic = async (req, res) => {
+    try {
+        const agents = await User.aggregate([
+            { $match: { role: { $in: ['agent', 'sub-admin'] }, isBlocked: false } },
+            {
+                $lookup: {
+                    from: "properties",
+                    localField: "_id",
+                    foreignField: "postedBy",
+                    as: "userProperties"
+                }
+            },
+            {
+                $lookup: {
+                    from: "enquiries",
+                    localField: "userProperties._id",
+                    foreignField: "property",
+                    as: "userEnquiries"
+                }
+            },
+            {
+                $addFields: {
+                    propertyCount: { $size: "$userProperties" },
+                    queryCount: { $size: "$userEnquiries" },
+                    actualSoldProperties: {
+                        $size: {
+                            $filter: {
+                                input: "$userProperties",
+                                as: "prop",
+                                cond: { $eq: ["$$prop.status", "Sold"] }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $addFields: {
+                    propertiesSold: {
+                        $cond: {
+                            if: { $and: [ { $lt: ["$actualSoldProperties", 10] }, { $gt: [{ $ifNull: ["$manualPropertiesSold", 0] }, 0] } ] },
+                            then: "$manualPropertiesSold",
+                            else: "$actualSoldProperties"
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    avatar: 1,
+                    role: 1,
+                    phone: 1, // Expose phone for agents directory
+                    email: 1, // Expose email for agents directory
+                    username: 1,
+                    createdAt: 1,
+                    propertyCount: 1,
+                    queryCount: 1,
+                    experience: 1,
+                    propertiesSold: 1
+                }
+            },
+            { $match: { propertyCount: { $gt: 0 } } },
+            { $sort: { queryCount: -1, propertyCount: -1 } }
+        ]);
+        res.json(agents);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get public agent profile
+// @route   GET /api/users/public/agent/:username
+export const getAgentProfilePublic = async (req, res) => {
+    try {
+        const agent = await User.findOne({ username: req.params.username, isBlocked: false })
+            .select('name username avatar role phone email createdAt experience manualPropertiesSold');
+
+        if (!agent) {
+            return res.status(404).json({ message: 'Agent not found' });
+        }
+        
+        // Calculate actual properties sold
+        const mongoose = await import('mongoose');
+        const Property = mongoose.model('Property');
+        const actualSold = await Property.countDocuments({ postedBy: agent._id, status: 'Sold' });
+        
+        let propertiesSold = actualSold;
+        if (actualSold < 10 && agent.manualPropertiesSold > 0) {
+            propertiesSold = agent.manualPropertiesSold;
+        }
+
+        const agentData = agent.toObject();
+        agentData.propertiesSold = propertiesSold;
+
+        res.json(agentData);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Update user (Admin only)
 // @route   PUT /api/users/:id
 export const updateUserByAdmin = async (req, res) => {
@@ -306,6 +479,9 @@ export const updateUserByAdmin = async (req, res) => {
             user.role = req.body.role || user.role;
             user.phone = req.body.phone || user.phone;
             user.isBlocked = req.body.isBlocked !== undefined ? req.body.isBlocked : user.isBlocked;
+            user.experience = req.body.experience !== undefined ? req.body.experience : user.experience;
+            user.manualPropertiesSold = req.body.manualPropertiesSold !== undefined ? req.body.manualPropertiesSold : user.manualPropertiesSold;
+            user.agentRequestStatus = req.body.agentRequestStatus || user.agentRequestStatus;
 
             if (req.body.password) {
                 user.password = req.body.password;
@@ -382,6 +558,23 @@ export const getWishlist = async (req, res) => {
         const user = await User.findById(req.user._id).populate('wishlist');
         if (user) {
             res.json(user.wishlist);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Request to become an agent
+// @route   POST /api/users/profile/agent-request
+export const requestAgentRole = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user) {
+            user.agentRequestStatus = 'Pending';
+            await user.save();
+            res.json({ message: 'Agent request submitted successfully', status: user.agentRequestStatus });
         } else {
             res.status(404).json({ message: 'User not found' });
         }

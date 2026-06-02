@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-    $headers .= 'From: Maa Mansa Devi Property <noreply@mmdproperty.com>' . "\r\n";
+    $headers .= 'From: Maa Mansa Property <noreply@mmdproperty.com>' . "\r\n";
 
     // Send email using PHP mail() with -f flag (Often required by Hostinger/Shared hosting)
     if(mail($to, $subject, $message, $headers, "-f noreply@mmdproperty.com")) {

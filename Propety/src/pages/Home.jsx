@@ -8,7 +8,7 @@ import {
   TrendingUp, Phone, ShieldCheck, BadgeCheck, Clock, Handshake,
   Quote, Sparkles, ArrowRight, Award, Heart, Eye, CheckCircle,
   Zap, Compass, Globe, Layers, Coffee, Sun, Moon, Calendar, User, ArrowUpRight,
-  Key, PlusCircle, LayoutGrid
+  Key, PlusCircle, LayoutGrid, MessageSquare
 } from 'lucide-react';
 import { BASE_URL } from '../api';
 
@@ -42,9 +42,10 @@ function Home() {
   }, []);
 
   const [featuredProperties, setFeaturedProperties] = useState([]);
-  const [topLocations, setTopLocations] = useState([]);
+  const [topAgents, setTopAgents] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [agentCarouselIndex, setAgentCarouselIndex] = useState(0);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -87,19 +88,12 @@ function Home() {
 
         setFeaturedProperties(formattedData);
 
-        // Calculate Top Locations
-        const locationCounts = allProperties.reduce((acc, p) => {
-          const loc = p.city || p.location;
-          if (loc) acc[loc] = (acc[loc] || 0) + 1;
-          return acc;
-        }, {});
-
-        const sortedLocations = Object.entries(locationCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
-          .map(([name]) => name);
-        
-        setTopLocations(sortedLocations);
+        // Fetch Top Agents
+        const agentsRes = await fetch(`${BASE_URL}/users/public/agents`);
+        const agentsData = await agentsRes.json();
+        // Sort by queryCount and propertyCount, take top 5
+        const sortedAgents = agentsData.slice(0, 5);
+        setTopAgents(sortedAgents);
       } catch (error) {
         console.error('Error fetching initial data:', error);
       }
@@ -117,6 +111,20 @@ function Home() {
       return () => clearInterval(timer);
     }
   }, [featuredProperties]);
+
+  // Auto-scroll logic for agents carousel
+  useEffect(() => {
+    if (topAgents.length > 3) {
+      const timer = setInterval(() => {
+        setAgentCarouselIndex(prev => {
+          const itemsVisible = window.innerWidth > 1024 ? 4 : window.innerWidth > 768 ? 2 : 1;
+          const maxIndex = Math.max(0, topAgents.length - itemsVisible);
+          return maxIndex > 0 ? (prev + 1) % (maxIndex + 1) : 0;
+        });
+      }, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [topAgents]);
 
   const tabs = [
     { name: 'Buy', icon: HomeIcon },
@@ -148,7 +156,7 @@ function Home() {
   ];
 
   const testimonials = [
-    { name: 'Rahul Sharma', role: 'Home Owner, Sector 6', text: 'Found my dream villa in Panchkula through Maa Mansa Devi Property. The process was incredibly smooth and professional. They handled everything from paperwork to registration.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200', rating: 5 },
+    { name: 'Rahul Sharma', role: 'Home Owner, Sector 6', text: 'Found my dream villa in Panchkula through Maa Mansa Property. The process was incredibly smooth and professional. They handled everything from paperwork to registration.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200', rating: 5 },
     { name: 'Priya Singh', role: 'IT Professional, Mohali', text: 'Highly recommend their rental services. They understood my requirements perfectly and showed me the best options in Sector 67. Got my dream apartment within a week!', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200', rating: 5 },
     { name: 'Amit Verma', role: 'Business Owner, Zirakpur', text: 'Best commercial property deals in the region. Their legal team is very thorough and helped me avoid a potential scam. Saved me crores with their due diligence.', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200', rating: 5 }
   ];
@@ -397,18 +405,7 @@ function Home() {
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-5 mt-12">
-            {topLocations.map(loc => (
-              <button
-                key={loc}
-                onClick={() => navigate(`/properties?search=${loc}`)}
-                className="group flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-sm border border-slate-200/50 text-slate-600 text-xs font-semibold hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow"
-              >
-                <MapPin className="w-3 h-3 transition-transform group-hover:scale-110" />
-                {loc}
-              </button>
-            ))}
-          </div>
+
         </div>
 
         {/* Stats Strip with Hover Effects */}
@@ -435,7 +432,7 @@ function Home() {
       </section>
 
       {/* Properties Section with Animated Cards */}
-      <section className="py-16 bg-gradient-to-b from-white to-slate-50/50 relative">
+      <section className="pt-16 pb-8 bg-gradient-to-b from-white to-slate-50/50 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
@@ -490,6 +487,101 @@ function Home() {
                   }`}
                 />
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Agents Section */}
+      <section className="pt-8 pb-16 bg-slate-50 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center relative z-20">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-8 h-[2px] bg-blue-500 rounded-full" />
+              <span className="text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-1">
+                <Award className="w-3 h-3" /> Premium Experts
+              </span>
+              <div className="w-8 h-[2px] bg-blue-500 rounded-full" />
+            </div>
+            <h3 className="text-3xl md:text-4xl font-black text-slate-900 mb-12 tracking-tight">Meet Our Top Agents</h3>
+            
+            <div className="relative overflow-hidden max-w-[1200px] mx-auto px-4">
+              <div 
+                className="flex transition-transform duration-1000 ease-in-out gap-6 pt-6 pb-6"
+                style={{ transform: `translateX(-${agentCarouselIndex * (100 / (window.innerWidth > 1024 ? 4 : window.innerWidth > 768 ? 2 : 1)) }%)` }}
+              >
+                {topAgents.map((agent, i) => (
+                  <div key={agent._id} className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] flex-shrink-0 flex justify-center">
+                    <Link
+                      to={`/agent/${agent.username || agent._id}`}
+                      className="group relative flex flex-col items-center w-full max-w-[240px] p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-2 transition-all duration-500 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/20"
+                    >
+                      {/* Decorative Background Glow on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 rounded-[2rem] transition-opacity duration-500" />
+                      
+                      {/* Rank Badge */}
+                      <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-1 z-10">
+                        <Star className="w-3 h-3 fill-white" /> Top {i + 1}
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="relative mb-5 z-10">
+                        <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-500">
+                          <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border-[3px] border-white">
+                            {agent.avatar ? (
+                              <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-4xl font-black bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                {agent.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Verification Tick */}
+                        <div className="absolute bottom-0 right-1 w-7 h-7 bg-emerald-500 rounded-full border-[3px] border-white flex items-center justify-center shadow-md">
+                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="text-center z-10 w-full">
+                        <p className="font-black text-slate-900 text-lg mb-3 group-hover:text-blue-600 transition-colors">{agent.name}</p>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+                          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full group-hover:bg-white group-hover:text-blue-600 transition-colors border border-slate-100 group-hover:border-blue-100">
+                            <Building2 className="w-3.5 h-3.5" />
+                            {agent.propertyCount || 0} Active
+                          </div>
+                          {agent.propertiesSold > 0 && (
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100 group-hover:bg-purple-100 transition-colors">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {agent.propertiesSold} Sold
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              {/* Carousel Indicators */}
+              <div className="flex justify-center gap-2 mt-10">
+                {Array.from({ length: Math.max(0, topAgents.length - (window.innerWidth > 1024 ? 3 : window.innerWidth > 768 ? 1 : 0)) }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setAgentCarouselIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      agentCarouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-14">
+              <Link to="/agents" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-slate-900 text-white font-bold text-sm hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/30 transition-all group">
+                Explore Directory <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </div>
@@ -666,7 +758,7 @@ function Home() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">Dream Property?</span>
           </h2>
           <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-12 font-medium">
-            Join 3,500+ happy families who found their perfect home with Maa Mansa Devi Property experts.
+            Join 3,500+ happy families who found their perfect home with Maa Mansa Property experts.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <button className="w-full sm:w-auto px-12 py-6 rounded-2xl bg-blue-600 text-white font-black text-lg hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-3 group/btn">

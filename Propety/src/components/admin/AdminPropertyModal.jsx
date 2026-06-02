@@ -189,6 +189,19 @@ const AdminPropertyModal = ({
                     {['Published', 'Pending', 'Draft'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
+                <div className="col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <input 
+                    type="checkbox" 
+                    name="showPosterContact" 
+                    checked={formData.showPosterContact} 
+                    onChange={handleInputChange} 
+                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+                  />
+                  <div>
+                    <p className="text-sm font-black text-slate-900">Show Poster's Contact Info</p>
+                    <p className="text-[10px] font-bold text-slate-500">If unchecked, Maa Mansa (Admin) contact details will be shown on this property.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

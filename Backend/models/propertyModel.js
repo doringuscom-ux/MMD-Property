@@ -30,7 +30,7 @@ const propertySchema = mongoose.Schema({
     status: { 
         type: String, 
         required: true, 
-        enum: ['For Sale', 'For Rent', 'Commercial', 'New Launch', 'Premium'],
+        enum: ['For Sale', 'For Rent', 'Commercial', 'New Launch', 'Premium', 'Sold', 'Rented'],
         default: 'For Sale'
     },
     images: [{
@@ -96,6 +96,10 @@ const propertySchema = mongoose.Schema({
         default: false
     },
     isPromoted: {
+        type: Boolean,
+        default: false
+    },
+    showPosterContact: {
         type: Boolean,
         default: false
     }

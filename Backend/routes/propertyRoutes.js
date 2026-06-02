@@ -7,7 +7,8 @@ import {
     updateProperty,
     deleteProperty,
     bulkUpdateProperties,
-    bulkDeleteProperties
+    bulkDeleteProperties,
+    updatePropertyStatusQuick
 } from '../controllers/propertyController.js';
 
 import { protect, admin, subAdmin, optionalProtect } from '../middleware/authMiddleware.js';
@@ -23,5 +24,7 @@ router.route('/:id')
     .get(optionalProtect, getPropertyById)
     .put(protect, updateProperty)
     .delete(protect, deleteProperty);
+
+router.route('/:id/status').put(protect, updatePropertyStatusQuick);
 
 export default router;

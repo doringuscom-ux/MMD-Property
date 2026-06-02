@@ -8,6 +8,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -63,7 +64,7 @@ const Signup = () => {
       const response = await fetch(`${BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, password, otp })
+        body: JSON.stringify({ name, email, phone, password, otp, username })
       });
 
       const data = await response.json();
@@ -168,6 +169,13 @@ const Signup = () => {
                           <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
                           <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98XXX XXXX" className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
                        </div>
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Username</label>
+                    <div className="relative group">
+                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                       <input required type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="e.g. johndoe (only lowercase and numbers)" className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-emerald-600 outline-none transition-all font-bold text-sm" />
                     </div>
                  </div>
 

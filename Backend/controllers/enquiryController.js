@@ -46,7 +46,7 @@ export const createEnquiry = async (req, res) => {
       const htmlContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 0; color: #333; background-color: #f8fafc; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; max-width: 600px;">
           <div style="background-color: #0f172a; padding: 25px; text-align: center;">
-            <h2 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">Maa Mansa Devi Property</h2>
+            <h2 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">Maa Mansa Property</h2>
             <p style="color: #94a3b8; margin: 5px 0 0; font-size: 12px; text-transform: uppercase; font-weight: bold;">New Enquiry Notification</p>
           </div>
           <div style="padding: 30px; background-color: #ffffff;">
@@ -66,7 +66,7 @@ export const createEnquiry = async (req, res) => {
             </div>
           </div>
           <div style="padding: 20px; text-align: center; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
-            <p style="margin: 0; font-size: 11px; color: #94a3b8;">&copy; 2026 Maa Mansa Devi Property Management System</p>
+            <p style="margin: 0; font-size: 11px; color: #94a3b8;">&copy; 2026 Maa Mansa Property Management System</p>
             <p style="margin: 5px 0 0; font-size: 10px; color: #cbd5e1;">Property Portal Admin Alert</p>
           </div>
         </div>

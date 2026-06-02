@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Home, Search, Building2, MapPin, ChevronRight, 
-  User, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings 
+  User, Users, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings 
 } from 'lucide-react';
 import logoImg from '../assets/NewLogo.png';
 import { BASE_URL } from '../api';
@@ -47,8 +47,8 @@ const Navbar = ({ isSolid = false }) => {
   const navLinks = [
     { name: 'Home', icon: Home, href: '/' },
     { name: 'Properties', icon: Building2, href: '/properties' },
+    { name: 'Agents', icon: Users, href: '/agents' },
     { name: 'Contact', icon: Phone, href: '/contact' },
-    { name: 'Locations', icon: MapPin, href: '#' },
   ];
 
   return (
@@ -70,7 +70,7 @@ const Navbar = ({ isSolid = false }) => {
 
               <div className="flex flex-col justify-center">
                 <span className="text-base min-[425px]:text-lg max-[1073px]:text-lg md:text-xl font-black text-slate-900 font-heading leading-tight tracking-tight">
-                  Maa Mansa Devi Property <span className="text-blue-600">.</span>
+                  Maa Mansa Property <span className="text-blue-600">.</span>
                 </span>
                 <span className="text-[9px] min-[425px]:text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 group-hover:text-blue-600/80 transition-colors leading-none">
                   Panchkula • Mohali
@@ -235,7 +235,7 @@ const Navbar = ({ isSolid = false }) => {
               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                 <Home className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Devi Property.</span>
+              <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Property.</span>
             </div>
             <button 
               onClick={() => setIsOpen(false)}

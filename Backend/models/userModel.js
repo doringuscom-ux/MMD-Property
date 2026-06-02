@@ -11,13 +11,18 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true
     },
+    username: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     password: {
         type: String,
         required: true
     },
     role: {
         type: String,
-        enum: ['admin', 'sub-admin', 'user'],
+        enum: ['admin', 'sub-admin', 'agent', 'user'],
         default: 'user'
     },
     phone: {
@@ -38,6 +43,19 @@ const userSchema = mongoose.Schema({
     avatar: {
         type: String,
         default: ''
+    },
+    experience: {
+        type: String,
+        default: ''
+    },
+    manualPropertiesSold: {
+        type: Number,
+        default: 0
+    },
+    agentRequestStatus: {
+        type: String,
+        enum: ['None', 'Pending', 'Approved', 'Rejected'],
+        default: 'None'
     }
 }, {
     timestamps: true

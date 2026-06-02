@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, UserCircle, Mail, Phone, Calendar, Shield, ShieldCheck, Trash2, MoreVertical, ExternalLink, Lock, Ban, CheckCircle, X, Save, User } from 'lucide-react';
+import { Search, UserCircle, Mail, Phone, Calendar, Shield, ShieldCheck, Trash2, MoreVertical, ExternalLink, Lock, Ban, CheckCircle, X, Save, User, Building2 } from 'lucide-react';
 import { BASE_URL } from '../../api';
 
-const AdminUsers = ({ showToast }) => {
+const AdminUsers = ({ showToast, isAgentMode = false }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,9 +17,34 @@ const AdminUsers = ({ showToast }) => {
     phone: '',
     role: 'user',
     password: '',
-    isBlocked: false
+    isBlocked: false,
+    experience: '',
+    manualPropertiesSold: 0,
+    agentRequestStatus: 'None'
   });
   const [actionLoading, setActionLoading] = useState(false);
+
+  // User Properties Modal State
+  const [viewingProperties, setViewingProperties] = useState(null);
+  const [userPropertiesList, setUserPropertiesList] = useState([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(false);
+
+  const fetchUserProperties = async (user) => {
+      setViewingProperties(user);
+      setPropertiesLoading(true);
+      try {
+          const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+          const response = await fetch(`${BASE_URL}/properties?postedBy=${user._id}&pageSize=50`, {
+              headers: { 'Authorization': `Bearer ${userInfo?.token}` }
+          });
+          const data = await response.json();
+          setUserPropertiesList(data.properties || []);
+      } catch(error) {
+          if (showToast) showToast('error', 'Failed to load properties');
+      } finally {
+          setPropertiesLoading(false);
+      }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -59,7 +84,10 @@ const AdminUsers = ({ showToast }) => {
       phone: user.phone || '',
       role: user.role,
       password: '',
-      isBlocked: user.isBlocked || false
+      isBlocked: user.isBlocked || false,
+      experience: user.experience || '',
+      manualPropertiesSold: user.manualPropertiesSold || 0,
+      agentRequestStatus: user.agentRequestStatus || 'None'
     });
     setShowEditModal(true);
   };
@@ -154,7 +182,12 @@ const AdminUsers = ({ showToast }) => {
     const nameMatch = u.name.toLowerCase().includes(searchTerm.toLowerCase());
     const emailMatch = u.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = nameMatch || emailMatch;
-    const matchesRole = filterRole === 'All Roles' || (filterRole === 'Admin' ? u.role === 'admin' : u.role === 'user');
+    let matchesRole = true;
+    if (isAgentMode) {
+        matchesRole = u.role === 'agent' || u.role === 'sub-admin';
+    } else {
+        matchesRole = filterRole === 'All Roles' || (filterRole === 'Admin' ? u.role === 'admin' : u.role === 'user');
+    }
     return matchesSearch && matchesRole;
   });
 
@@ -163,8 +196,8 @@ const AdminUsers = ({ showToast }) => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h3 className="text-3xl font-black text-slate-900 tracking-tight">User Management</h3>
-          <p className="text-slate-500 font-bold mt-1">Manage permissions, roles and account status</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tight">{isAgentMode ? 'Agent Management' : 'User Management'}</h3>
+          <p className="text-slate-500 font-bold mt-1">{isAgentMode ? 'Manage agent profiles and their access' : 'Manage permissions, roles and account status'}</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -178,15 +211,17 @@ const AdminUsers = ({ showToast }) => {
               className="pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-slate-200 text-sm font-bold outline-none focus:ring-4 ring-blue-500/10 focus:border-blue-500 w-72 shadow-sm transition-all"
             />
           </div>
-          <select 
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-sm font-bold outline-none shadow-sm cursor-pointer hover:border-slate-300 transition-all focus:ring-4 ring-blue-500/10"
-          >
-            <option>All Roles</option>
-            <option>Admin</option>
-            <option>Users</option>
-          </select>
+          {!isAgentMode && (
+            <select 
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-sm font-bold outline-none shadow-sm cursor-pointer hover:border-slate-300 transition-all focus:ring-4 ring-blue-500/10"
+            >
+              <option>All Roles</option>
+              <option>Admin</option>
+              <option>Users</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -223,6 +258,16 @@ const AdminUsers = ({ showToast }) => {
                         <div>
                           <p className="font-black text-slate-900 text-base leading-tight group-hover:text-blue-600 transition-colors">{user.name}</p>
                           <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-wider">User ID: #{user._id.slice(-6)}</p>
+                          {user.agentRequestStatus === 'Pending' && (
+                             <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-50 text-purple-600 text-[9px] font-black uppercase tracking-widest border border-purple-100">
+                               <Shield className="w-3 h-3" /> Agent Request Pending
+                             </div>
+                          )}
+                          {user.propertyCount > 1 && user.role === 'user' && user.agentRequestStatus !== 'Pending' && (
+                             <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-100">
+                               <Building2 className="w-3 h-3" /> Eligible for Agent
+                             </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -248,7 +293,7 @@ const AdminUsers = ({ showToast }) => {
                             {user.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
                             {user.role}
                           </div>
-                          {user.isBlocked ? (
+                           {user.isBlocked ? (
                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-600 text-white text-[9px] font-black uppercase tracking-widest w-fit animate-pulse">
                                 <Ban className="w-3.5 h-3.5" /> Blocked
                              </div>
@@ -257,6 +302,15 @@ const AdminUsers = ({ showToast }) => {
                                 <CheckCircle className="w-3.5 h-3.5" /> Active
                              </div>
                           )}
+                          <div 
+                             onClick={() => fetchUserProperties(user)}
+                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest w-fit border border-blue-100 cursor-pointer hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          >
+                             <Building2 className="w-3.5 h-3.5" /> {user.propertyCount || 0} Properties
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-bold mt-1">
+                             <span className="text-emerald-600">{user.propertiesSoldThisMonth || 0} Sold</span> • {user.propertiesPostedThisMonth || 0} Posted (This Month)
+                          </div>
                        </div>
                     </td>
                     <td className="px-8 py-6">
@@ -388,6 +442,7 @@ const AdminUsers = ({ showToast }) => {
                       className="w-full pl-14 pr-10 py-4.5 rounded-[1.5rem] bg-slate-50 border border-transparent focus:bg-white focus:border-blue-600 outline-none transition-all font-bold text-sm cursor-pointer appearance-none shadow-inner"
                     >
                       <option value="user">Standard User</option>
+                      <option value="agent">Agent</option>
                       <option value="sub-admin">Sub Administrator</option>
                       <option value="admin">Main Administrator</option>
                     </select>
@@ -395,6 +450,54 @@ const AdminUsers = ({ showToast }) => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Experience (Agents)</label>
+                  <div className="relative group">
+                    <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors pointer-events-none" />
+                    <input 
+                      type="text"
+                      placeholder="e.g. 5 Years"
+                      value={editFormData.experience}
+                      onChange={(e) => setEditFormData({...editFormData, experience: e.target.value})}
+                      className="w-full pl-14 pr-6 py-4.5 rounded-[1.5rem] bg-slate-50 border border-transparent focus:bg-white focus:border-blue-600 outline-none transition-all font-bold text-sm shadow-inner"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Agent Request Status</label>
+                  <div className="relative group">
+                    <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors pointer-events-none" />
+                    <select 
+                      value={editFormData.agentRequestStatus}
+                      onChange={(e) => setEditFormData({...editFormData, agentRequestStatus: e.target.value})}
+                      className="w-full pl-14 pr-10 py-4.5 rounded-[1.5rem] bg-slate-50 border border-transparent focus:bg-white focus:border-blue-600 outline-none transition-all font-bold text-sm cursor-pointer appearance-none shadow-inner"
+                    >
+                      <option value="None">None</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Manual Properties Sold (Agents)</label>
+                  <div className="relative group">
+                    <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-600 transition-colors pointer-events-none" />
+                    <input 
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 5"
+                      value={editFormData.manualPropertiesSold}
+                      onChange={(e) => setEditFormData({...editFormData, manualPropertiesSold: Number(e.target.value)})}
+                      className="w-full pl-14 pr-6 py-4.5 rounded-[1.5rem] bg-slate-50 border border-transparent focus:bg-white focus:border-blue-600 outline-none transition-all font-bold text-sm shadow-inner"
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="space-y-3">
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Update Password (Secure)</label>
                 <div className="relative group">
@@ -451,6 +554,59 @@ const AdminUsers = ({ showToast }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View User Properties Modal */}
+      {viewingProperties && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setViewingProperties(null)} />
+          <div className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[85vh]">
+            <div className="bg-[#0F172A] p-8 text-white relative flex-shrink-0">
+               <div className="flex items-center justify-between relative z-10">
+                  <div>
+                    <h4 className="text-2xl font-black tracking-tight">{viewingProperties.name}'s Properties</h4>
+                    <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest">Total: {viewingProperties.propertyCount || 0} Listings</p>
+                  </div>
+                  <button onClick={() => setViewingProperties(null)} className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
+                    <X className="w-6 h-6" />
+                  </button>
+               </div>
+            </div>
+            
+            <div className="p-8 overflow-y-auto bg-slate-50 flex-1">
+               {propertiesLoading ? (
+                  <div className="flex flex-col items-center justify-center h-48 space-y-4">
+                     <div className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                     <p className="font-bold text-slate-500 uppercase tracking-widest text-xs">Loading Properties...</p>
+                  </div>
+               ) : userPropertiesList.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {userPropertiesList.map(prop => (
+                        <div key={prop._id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+                           <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                              <img src={prop.images?.[0] || 'https://via.placeholder.com/150'} alt="Property" className="w-full h-full object-cover" />
+                           </div>
+                           <div className="flex flex-col justify-center">
+                              <h5 className="font-black text-slate-900 leading-tight mb-1 line-clamp-1">{prop.title}</h5>
+                              <p className="text-slate-500 text-xs font-bold mb-2 line-clamp-1">{prop.location}</p>
+                              <div className="flex gap-2">
+                                 <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-emerald-100">{prop.status}</span>
+                                 <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-blue-100">{prop.propertyType}</span>
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               ) : (
+                  <div className="text-center py-20">
+                     <Building2 className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                     <h4 className="text-xl font-black text-slate-900">No Properties Found</h4>
+                     <p className="text-slate-500 font-bold mt-2">This user hasn't posted any properties yet.</p>
+                  </div>
+               )}
+            </div>
           </div>
         </div>
       )}

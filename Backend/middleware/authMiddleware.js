@@ -25,7 +25,11 @@ const protect = async (req, res, next) => {
 
             next();
         } catch (error) {
-            console.error(error);
+            if (error.name === 'TokenExpiredError') {
+                console.error('JWT expired:', error.expiredAt);
+            } else {
+                console.error('Auth error:', error.message);
+            }
             res.status(401).json({ message: 'Not authorized, token failed' });
         }
     } else {
@@ -64,7 +68,11 @@ const optionalProtect = async (req, res, next) => {
             req.user = await User.findById(decoded.id).select('-password');
         } catch (error) {
             // Silently fail and proceed as guest if token is invalid
-            console.error('Optional auth failed:', error.message);
+            if (error.name === 'TokenExpiredError') {
+                console.error('Optional JWT expired');
+            } else {
+                console.error('Optional auth failed:', error.message);
+            }
         }
     }
     next();

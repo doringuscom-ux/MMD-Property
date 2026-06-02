@@ -11,6 +11,10 @@ import SavedProperties from './pages/SavedProperties';
 import Contact from './pages/Contact';
 import MyEnquiries from './pages/MyEnquiries';
 import Profile from './pages/Profile';
+import AgentProfile from './pages/AgentProfile';
+import AgentsDirectory from './pages/AgentsDirectory';
+import Blog from './pages/Blog';
+import BlogDetail from './pages/BlogDetail';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -28,6 +32,11 @@ function App() {
         <Route path="/my-enquiries" element={<MyEnquiries />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/agents" element={<AgentsDirectory />} />
+        <Route path="/agent" element={<AgentsDirectory />} />
+        <Route path="/agent/:username" element={<AgentProfile />} />
+        <Route path="/blogs" element={<Blog />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
         
         {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['admin', 'sub-admin']} />}>

@@ -21,7 +21,8 @@ const AdminPropertyTable = ({
   categoryFilter,
   setCategoryFilter,
   itemsPerPage,
-  setItemsPerPage
+  setItemsPerPage,
+  handleStatusChange
 }) => {
   // Calculate real stats
   const publishedCount = properties.filter(p => p.adminStatus === 'Published').length;
@@ -172,7 +173,7 @@ const AdminPropertyTable = ({
                 </th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Property</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Category</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Type / Status</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Price</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Admin Status</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Added By</th>
@@ -210,10 +211,23 @@ const AdminPropertyTable = ({
                       </span>
                     </div>
                   </td>
-                  <td className="px-8 py-5 text-center">
+                  <td className="px-8 py-5 text-center flex flex-col items-center gap-2">
                     <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50">
                       {property.propertyType}
                     </span>
+                    <select
+                      value={property.status || 'For Sale'}
+                      onChange={(e) => handleStatusChange && handleStatusChange(property._id, e.target.value)}
+                      className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 outline-none border-none cursor-pointer hover:bg-slate-200 transition-colors"
+                    >
+                      <option value="For Sale">For Sale</option>
+                      <option value="For Rent">For Rent</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="New Launch">New Launch</option>
+                      <option value="Premium">Premium</option>
+                      <option value="Sold">Sold</option>
+                      <option value="Rented">Rented</option>
+                    </select>
                   </td>
                   <td className="px-8 py-5 text-center">
                     <span className="text-sm font-black text-slate-900">₹ {formatPrice(property.price)}</span>
@@ -228,10 +242,16 @@ const AdminPropertyTable = ({
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">A</div>
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                        {property.postedBy?.name ? property.postedBy.name.charAt(0).toUpperCase() : 'A'}
+                      </div>
                       <div className="text-left">
-                        <p className="text-[10px] font-black text-slate-900 leading-none mb-1">Admin</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase">Super Admin</p>
+                        <p className="text-[10px] font-black text-slate-900 leading-none mb-1 truncate max-w-[100px]">
+                          {property.postedBy?.name || 'Admin'}
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">
+                          {property.postedBy?.role || 'Super Admin'}
+                        </p>
                       </div>
                     </div>
                   </td>

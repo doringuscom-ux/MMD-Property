@@ -12,10 +12,13 @@ const Profile = () => {
     name: '',
     email: '',
     phone: '',
+    experience: '',
+    agentRequestStatus: 'None',
     oldPassword: '',
     password: '',
     confirmPassword: ''
   });
+  const [userInfo, setUserInfo] = useState(null);
   const [avatar, setAvatar] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
@@ -49,12 +52,15 @@ const Profile = () => {
               name: data.name || '',
               email: data.email || '',
               phone: data.phone || '',
+              experience: data.experience || '',
+              agentRequestStatus: data.agentRequestStatus || 'None',
               oldPassword: '',
               password: '',
               confirmPassword: ''
             });
             setAvatar(data.avatar || '');
             setOriginalEmail(data.email || '');
+            setUserInfo(userInfo);
           }
         } catch (error) {
           console.error('Error fetching profile:', error);
@@ -238,6 +244,7 @@ const Profile = () => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          experience: formData.experience || undefined,
           oldPassword: formData.oldPassword || undefined,
           password: formData.password || undefined,
           otp: verificationNeeded ? otp : undefined
@@ -259,6 +266,31 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Profile update error:', error);
+      setMessage({ type: 'error', text: 'Something went wrong' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAgentRequest = async () => {
+    try {
+      setLoading(true);
+      const userInfoLocal = JSON.parse(localStorage.getItem('userInfo'));
+      const response = await fetch(`${BASE_URL}/users/profile/agent-request`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${userInfoLocal.token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Agent request submitted successfully!' });
+        setFormData(prev => ({ ...prev, agentRequestStatus: data.status }));
+      } else {
+        setMessage({ type: 'error', text: data.message || 'Failed to submit request' });
+      }
+    } catch (error) {
+      console.error('Agent request error:', error);
       setMessage({ type: 'error', text: 'Something went wrong' });
     } finally {
       setLoading(false);
@@ -424,6 +456,37 @@ const Profile = () => {
                       placeholder="+91 00000 00000"
                     />
                   </div>
+
+                  {(userInfo?.role === 'agent' || userInfo?.role === 'admin' || userInfo?.role === 'sub-admin') ? (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3" /> Experience (e.g. 5 Years)
+                      </label>
+                      <input 
+                        type="text" 
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleChange}
+                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-blue-600 outline-none transition-all font-medium text-slate-900"
+                        placeholder="E.g. 5 Years"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-6 p-6 bg-indigo-50 border border-indigo-100 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-black text-indigo-900">Become an Agent</h4>
+                        <p className="text-xs text-indigo-700 font-medium mt-1">Upgrade your account to post unlimited properties and manage clients.</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleAgentRequest}
+                        disabled={formData.agentRequestStatus === 'Pending' || loading}
+                        className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {formData.agentRequestStatus === 'Pending' ? 'Request Pending' : 'Request Agent Role'}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-6 pt-6">
