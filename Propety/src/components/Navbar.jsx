@@ -52,7 +52,7 @@ const Navbar = ({ isSolid = false }) => {
   ];
 
   return (
-    <nav className={`fixed w-full z-[1000] transition-all duration-500 ease-in-out ${isSolid || scrolled ? 'py-2 bg-white shadow-lg' : 'py-4 bg-white/0'
+    <nav className={`fixed w-full z-[1000] transition-all duration-500 ease-in-out ${isSolid || scrolled ? 'py-2 bg-white shadow-lg' : 'py-2 bg-white/70 backdrop-blur-md border-b border-white/20'
       }`}>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

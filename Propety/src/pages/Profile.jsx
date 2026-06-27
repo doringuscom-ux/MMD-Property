@@ -5,8 +5,7 @@ import { User, Mail, Phone, Lock, Save, Camera, ShieldCheck, CheckCircle2, XCirc
 import { BASE_URL } from '../api';
 const Profile = () => {
   const fileInputRef = useRef(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const cameraInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -22,9 +21,6 @@ const Profile = () => {
   const [avatar, setAvatar] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
-  const [showCameraModal, setShowCameraModal] = useState(false);
-  const [cameraStream, setCameraStream] = useState(null);
-  const [capturedImage, setCapturedImage] = useState(null);
   
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -77,63 +73,6 @@ const Profile = () => {
       setIsOtpSent(false);
       setOtp('');
     }
-  };
-
-  // --- Camera Logic ---
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 720 } } 
-      });
-      setCameraStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setShowCameraModal(true);
-      setShowUploadOptions(false);
-      setCapturedImage(null);
-    } catch (err) {
-      console.error("Camera Error:", err);
-      setMessage({ type: 'error', text: 'Could not access camera. Please check permissions.' });
-    }
-  };
-
-  const stopCamera = () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-    setShowCameraModal(false);
-  };
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (video && canvas) {
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      setCapturedImage(dataUrl);
-    }
-  };
-
-  const handleUploadCaptured = async () => {
-    if (!capturedImage) return;
-
-    setUploading(true);
-    stopCamera();
-
-    // Convert dataURL to blob
-    const res = await fetch(capturedImage);
-    const blob = await res.blob();
-    const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
-
-    const uploadData = new FormData();
-    uploadData.append('image', file);
-
-    await performUpload(uploadData);
   };
 
   // --- Common Upload Logic ---
@@ -331,6 +270,7 @@ const Profile = () => {
                   
                   {/* Hidden Inputs */}
                   <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                  <input type="file" ref={cameraInputRef} onChange={handleFileChange} accept="image/*" capture="user" className="hidden" />
 
                   {/* Camera Icon Button */}
                   <button 
@@ -349,7 +289,7 @@ const Profile = () => {
                         <div className="flex flex-col gap-1 text-left">
                           <button 
                             type="button"
-                            onClick={startCamera}
+                            onClick={() => { setShowUploadOptions(false); cameraInputRef.current.click(); }}
                             className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-2xl transition-colors text-slate-700 font-bold text-sm w-full"
                           >
                             <div className="p-2 bg-blue-100 rounded-xl text-blue-600"><Camera className="w-4 h-4" /></div>
@@ -357,7 +297,7 @@ const Profile = () => {
                           </button>
                           <button 
                             type="button"
-                            onClick={() => { fileInputRef.current.click(); }}
+                            onClick={() => { setShowUploadOptions(false); fileInputRef.current.click(); }}
                             className="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-2xl transition-colors text-slate-700 font-bold text-sm w-full"
                           >
                             <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600"><ImageIcon className="w-4 h-4" /></div>
@@ -602,81 +542,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* --- CAMERA MODAL --- */}
-      {showCameraModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-md" onClick={stopCamera}></div>
-          <div className="relative w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            {/* Header */}
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <Camera className="w-6 h-6 text-blue-600" /> Take Profile Photo
-              </h3>
-              <button onClick={stopCamera} className="p-2 hover:bg-slate-100 rounded-2xl transition-colors">
-                <X className="w-6 h-6 text-slate-400" />
-              </button>
-            </div>
-
-            {/* Video Preview */}
-            <div className="relative bg-slate-100 aspect-square flex items-center justify-center overflow-hidden">
-              {!capturedImage ? (
-                <>
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    className="w-full h-full object-cover"
-                    style={{ transform: 'scaleX(-1)' }}
-                  />
-                  <div className="absolute inset-0 border-[40px] border-black/20 pointer-events-none flex items-center justify-center">
-                     <div className="w-64 h-64 border-2 border-dashed border-white/50 rounded-full"></div>
-                  </div>
-                </>
-              ) : (
-                <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-              )}
-              
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-
-            {/* Footer / Controls */}
-            <div className="p-8 flex flex-col items-center gap-4">
-              {!capturedImage ? (
-                <button 
-                  onClick={capturePhoto}
-                  className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center shadow-xl shadow-blue-600/30 active:scale-90 transition-transform border-4 border-blue-50"
-                >
-                  <div className="w-16 h-16 rounded-full border-2 border-white/50 flex items-center justify-center">
-                    <div className="w-14 h-14 bg-white rounded-full"></div>
-                  </div>
-                </button>
-              ) : (
-                <div className="flex gap-4 w-full">
-                  <button 
-                    onClick={() => setCapturedImage(null)}
-                    className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
-                  >
-                    <RefreshCw className="w-5 h-5" /> Retake
-                  </button>
-                  <button 
-                    onClick={handleUploadCaptured}
-                    className="flex-1 py-4 rounded-2xl bg-blue-600 text-white font-black flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all"
-                  >
-                    <CheckCircle2 className="w-5 h-5" /> Use This Photo
-                  </button>
-                </div>
-              )}
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                {!capturedImage ? 'Align your face within the frame' : 'Do you want to use this photo?'}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Footer />
-
-
     </div>
   );
 };

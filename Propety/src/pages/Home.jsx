@@ -26,10 +26,10 @@ function Home() {
     if (searchQuery) params.append('search', searchQuery);
     if (activeTab && activeTab !== 'Buy') params.append('category', activeTab);
     if (propertyType !== 'All Types') params.append('type', propertyType);
-    
+
     // Budget handling (simple mapping for now)
     if (budget !== 'Any Budget') {
-        params.append('budget', budget);
+      params.append('budget', budget);
     }
 
     navigate(`/properties?${params.toString()}`);
@@ -61,29 +61,29 @@ function Home() {
         // Logic for 20-minute rotation of regular properties
         const current20MinWindow = Math.floor(Date.now() / (1000 * 60 * 20));
         const rotatedRegular = [...regular].sort((a, b) => {
-           // Deterministic shuffle based on window
-           const seed = current20MinWindow + a._id.toString();
-           return seed.localeCompare(current20MinWindow + b._id.toString());
+          // Deterministic shuffle based on window
+          const seed = current20MinWindow + a._id.toString();
+          return seed.localeCompare(current20MinWindow + b._id.toString());
         });
 
         // Combine (All Promoted first, then ONLY 5 rotated regular)
         const combined = [...promoted, ...rotatedRegular.slice(0, 5)];
 
         const formattedData = combined.map(p => ({
-            id: p._id,
-            title: p.title,
-            price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
-            location: p.location,
-            beds: (p.bedrooms || 0).toString(),
-            baths: (p.bathrooms || 0).toString(),
-            area: (p.area || 0).toString(),
-            type: p.status || p.propertyType,
-            rating: "4.8",
-            verified: p.isVerified,
-            isLiked: false, // Will be updated below
-            isPromoted: p.isPromoted,
-            image: p.images[0],
-            images: p.images
+          id: p._id,
+          title: p.title,
+          price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
+          location: p.location,
+          beds: (p.bedrooms || 0).toString(),
+          baths: (p.bathrooms || 0).toString(),
+          area: (p.area || 0).toString(),
+          type: p.status || p.propertyType,
+          rating: "4.8",
+          verified: p.isVerified,
+          isLiked: false, // Will be updated below
+          isPromoted: p.isPromoted,
+          image: p.images[0],
+          images: p.images
         }));
 
         setFeaturedProperties(formattedData);
@@ -104,9 +104,13 @@ function Home() {
 
   // Auto-scroll logic for carousel
   useEffect(() => {
-    if (featuredProperties.length > 3) {
+    if (featuredProperties.length > 1) {
       const timer = setInterval(() => {
-        setCarouselIndex(prev => (prev + 1) % (featuredProperties.length - 2));
+        setCarouselIndex(prev => {
+          const itemsVisible = typeof window !== 'undefined' && window.innerWidth > 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1;
+          const maxIndex = Math.max(0, featuredProperties.length - itemsVisible);
+          return maxIndex > 0 ? (prev + 1) % (maxIndex + 1) : 0;
+        });
       }, 5000);
       return () => clearInterval(timer);
     }
@@ -114,10 +118,10 @@ function Home() {
 
   // Auto-scroll logic for agents carousel
   useEffect(() => {
-    if (topAgents.length > 3) {
+    if (topAgents.length > 1) {
       const timer = setInterval(() => {
         setAgentCarouselIndex(prev => {
-          const itemsVisible = window.innerWidth > 1024 ? 4 : window.innerWidth > 768 ? 2 : 1;
+          const itemsVisible = typeof window !== 'undefined' && window.innerWidth > 1024 ? 4 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1;
           const maxIndex = Math.max(0, topAgents.length - itemsVisible);
           return maxIndex > 0 ? (prev + 1) % (maxIndex + 1) : 0;
         });
@@ -192,244 +196,157 @@ function Home() {
     <div className="min-h-screen font-sans bg-white overflow-x-hidden">
       <Navbar />
 
-      {/* Hero Section with Parallax Effect */}
-      <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40" />
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-[10%] left-[5%] w-72 h-72 bg-blue-400/20 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-[20%] right-[5%] w-96 h-96 bg-indigo-400/20 rounded-full blur-[120px] animate-pulse delay-1000" />
-          <div className="absolute top-[40%] right-[20%] w-60 h-60 bg-cyan-400/15 rounded-full blur-[90px] animate-pulse delay-700" />
+      {/* Premium Hero Section */}
+      <section className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center pt-24 pb-12 overflow-hidden">
+        {/* Background Image with Parallax effect */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/bg.png"
+            alt="Hero Background"
+            className="w-full h-full object-cover object-center scale-105 animate-float-slow"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-900/95" />
         </div>
 
-        {/* Floating Elements (15 Premium Icons) */}
-        <div className="absolute top-[15%] left-[5%] animate-float-slow">
-          <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 shadow-xl flex items-center justify-center">
-            <HomeIcon className="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-        <div className="absolute top-[25%] left-[15%] animate-float-delayed delay-700">
-          <div className="w-8 h-8 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-          </div>
-        </div>
-        <div className="absolute top-[40%] left-[8%] animate-float-slow delay-300">
-          <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-indigo-500" />
-          </div>
-        </div>
-        <div className="absolute top-[8%] right-[12%] animate-float-delayed">
-          <div className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-xl flex items-center justify-center">
-            <Building2 className="w-7 h-7 text-blue-700" />
-          </div>
-        </div>
-        <div className="absolute top-[30%] right-[5%] animate-float-slow delay-1000">
-          <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Compass className="w-5 h-5 text-emerald-600" />
-          </div>
-        </div>
-        <div className="absolute top-[50%] right-[12%] animate-float-delayed delay-200">
-          <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 shadow-xl flex items-center justify-center">
-            <Globe className="w-6 h-6 text-cyan-600" />
-          </div>
-        </div>
-        <div className="absolute bottom-[20%] left-[12%] animate-float-slow delay-500">
-          <div className="w-14 h-14 bg-white rounded-2xl border border-slate-100 shadow-2xl flex items-center justify-center">
-            <MapPin className="w-7 h-7 text-red-500" />
-          </div>
-        </div>
-        <div className="absolute bottom-[35%] left-[4%] animate-float-delayed delay-1500">
-          <div className="w-9 h-9 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-          </div>
-        </div>
-        <div className="absolute bottom-[10%] right-[8%] animate-float-slow delay-800">
-          <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 shadow-xl flex items-center justify-center">
-            <Layers className="w-6 h-6 text-violet-600" />
-          </div>
-        </div>
-        <div className="absolute bottom-[30%] right-[15%] animate-float-delayed delay-400">
-          <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <CheckCircle className="w-5 h-5 text-emerald-500" />
-          </div>
-        </div>
-        <div className="absolute top-[60%] left-[18%] animate-float-slow delay-1200">
-          <div className="w-11 h-11 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
-          </div>
-        </div>
-        <div className="absolute top-[18%] left-[92%] animate-float-delayed delay-600">
-          <div className="w-9 h-9 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Coffee className="w-5 h-5 text-amber-700" />
-          </div>
-        </div>
-        <div className="absolute bottom-[5%] left-[25%] animate-float-slow delay-900">
-          <div className="w-8 h-8 bg-white rounded-lg border border-slate-100 shadow-md flex items-center justify-center">
-            <Sun className="w-4 h-4 text-orange-500" />
-          </div>
-        </div>
-        <div className="absolute bottom-[15%] right-[2%] animate-float-delayed delay-1100">
-          <div className="w-10 h-10 bg-white rounded-xl border border-slate-100 shadow-lg flex items-center justify-center">
-            <Moon className="w-5 h-5 text-slate-400" />
-          </div>
-        </div>
-        <div className="absolute top-[45%] right-[92%] animate-float-slow delay-1300">
-          <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 shadow-xl flex items-center justify-center">
-            <HomeIcon className="w-6 h-6 text-indigo-600" />
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-36 pb-16 relative z-10">
-          {/* Badge with Glow */}
-          <div className="flex justify-center mb-6">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
-              <span className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-blue-100 text-blue-600 text-[10px] sm:text-sm font-bold shadow-lg">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
-                </span>
-                Panchkula & Mohali's #1 Property Partner
-              </span>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center mt-10">
+          {/* Hero Text */}
+          <div className="text-center mb-10 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold tracking-widest mb-6 uppercase backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5" /> Welcome to Maa Mansa Property
             </div>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight mb-6 leading-tight">
+              Find Your Perfect <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
+                Dream Home
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto font-medium">
+              Discover the best properties in Panchkula, Mohali, and Zirakpur with Tri-City's most trusted real estate agency.
+            </p>
           </div>
 
-          {/* Main Heading with Gradient */}
-          <h1 className="text-center text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.1] mb-6">
-            <span className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent">
-              Find Your Perfect
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent animate-gradient">
-              Home in Tri-City
-            </span>
-          </h1>
-
-          <p className="text-center max-w-2xl mx-auto text-slate-500 text-lg md:text-xl leading-relaxed mb-16">
-            Browse verified flats, villas & commercial spaces across Panchkula, Mohali & Zirakpur
-            with the most trusted real estate experts.
-          </p>
-
-          {/* Search Card with Glassmorphism */}
-          <div className="relative group max-w-5xl mx-auto">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition duration-500" />
-            <div className="relative bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/50">
-              {/* Tabs with Animated Underline - Mobile Scrollable */}
-              <div className="relative border-b border-slate-100/50 bg-white/50 backdrop-blur-sm overflow-hidden">
-                <div className="flex overflow-x-auto no-scrollbar scroll-smooth flex-nowrap">
+          {/* Search Card with Clean Premium Look */}
+          <div className="w-full max-w-5xl animate-fade-in-up delay-200">
+            <div className="relative group">
+              {/* Soft glow behind card */}
+              <div className="absolute -inset-2 bg-white/20 rounded-[2rem] blur-xl transition duration-1000 opacity-50 group-hover:opacity-100" />
+              
+              <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+                
+                {/* Tabs */}
+                <div className="flex border-b border-slate-100 overflow-x-auto no-scrollbar bg-slate-50/80">
                   {tabs.map(tab => (
                     <button
                       key={tab.name}
                       onClick={() => setActiveTab(tab.name)}
-                      className={`relative px-5 py-4 text-xs sm:text-sm font-bold transition-all duration-300 flex items-center gap-2 flex-shrink-0 ${activeTab === tab.name
-                        ? 'text-blue-600'
-                        : 'text-slate-500 hover:text-slate-800'
+                      className={`relative px-6 py-4 text-sm font-bold transition-all duration-300 flex items-center gap-2 flex-shrink-0 ${activeTab === tab.name
+                        ? 'text-blue-600 bg-white'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
                         }`}
                     >
-                      <tab.icon className={`w-4 h-4 transition-all ${activeTab === tab.name ? 'scale-110 opacity-100' : 'opacity-50'}`} />
+                      <tab.icon className={`w-4 h-4 transition-all ${activeTab === tab.name ? 'scale-110 text-blue-600' : 'opacity-60'}`} />
                       <span className="whitespace-nowrap">{tab.name}</span>
                       {activeTab === tab.name && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full animate-slide-up" />
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full shadow-[0_-2px_8px_rgba(37,99,235,0.4)]" />
                       )}
                     </button>
                   ))}
                   
-                  {/* Special Post Property Tab - Premium Style */}
+                  {/* Post Property Tab */}
                   <Link
                     to="/post-property"
-                    className="flex-shrink-0 px-6 py-4 flex items-center gap-3 group transition-all"
+                    className="ml-auto flex-shrink-0 px-6 py-4 flex items-center gap-2 text-emerald-600 hover:bg-emerald-50 transition-colors border-l border-slate-100 group/post bg-white"
                   >
-                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-sm group-hover:shadow-emerald-200 group-hover:shadow-lg">
-                      <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter leading-none mb-1">Owner Exclusive</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-slate-900 group-hover:text-emerald-600 transition-colors whitespace-nowrap">Post Property</span>
-                        <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[8px] font-black shadow-lg shadow-emerald-200 animate-pulse border border-white/20">FREE</span>
-                      </div>
-                    </div>
+                     <PlusCircle className="w-4 h-4 group-hover/post:rotate-90 transition-transform" />
+                     <span className="text-sm font-bold whitespace-nowrap">Post Property</span>
+                     <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase">Free</span>
                   </Link>
                 </div>
-              </div>
 
-              {/* Search Fields */}
-              <div className="flex flex-col lg:flex-row gap-0">
-                <div className="flex items-center gap-3 flex-1 px-6 py-4 border-b lg:border-b-0 lg:border-r border-slate-100/50 hover:bg-slate-50/50 transition-colors group/input">
-                  <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Search locality, e.g. Sector 20 Panchkula…"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="flex-1 text-slate-800 placeholder-slate-400 text-sm font-medium bg-transparent outline-none"
-                  />
-                </div>
-                <div className="flex items-center gap-3 px-6 py-4 border-b lg:border-b-0 lg:border-r border-slate-100/50 hover:bg-slate-50/50 transition-colors">
-                  <Building2 className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                  <select 
-                    value={propertyType}
-                    onChange={e => setPropertyType(e.target.value)}
-                    className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none bg-no-repeat bg-right"
-                  >
-                    <option>All Types</option>
-                    <option>Apartment</option>
-                    <option>Villa</option>
-                    <option>Plot</option>
-                    <option>Commercial</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-3 px-6 py-4 border-b lg:border-b-0 lg:border-r border-slate-100/50 hover:bg-slate-50/50 transition-colors">
-                  <span className="text-slate-400 text-sm font-bold flex-shrink-0">₹</span>
-                  <select 
-                    value={budget}
-                    onChange={e => setBudget(e.target.value)}
-                    className="text-slate-700 text-sm font-medium bg-transparent outline-none cursor-pointer pr-8 appearance-none"
-                  >
-                    <option>Any Budget</option>
-                    <option>Under 50L</option>
-                    <option>50L – 1Cr</option>
-                    <option>1Cr – 2Cr</option>
-                    <option>2Cr+</option>
-                  </select>
-                </div>
-                <button 
-                  onClick={handleSearch}
-                  className="relative overflow-hidden group/btn flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-8 py-5 lg:py-4 transition-all duration-300 flex-shrink-0"
-                >
-                  <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 ease-out group-hover/btn:w-full" />
-                  <Search className="w-5 h-5 relative z-10" />
-                  <span className="relative z-10 text-sm lg:text-base">Search Properties</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* Stats Strip with Hover Effects */}
-        <div className="relative z-10 border-y border-slate-100 bg-white/80 backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
-              {stats.map(({ icon: Icon, value, label, gradient, delay }, idx) => (
-                <div
-                  key={label}
-                  className="group relative"
-                >
-                  <div className="flex flex-col items-center text-center p-4 rounded-2xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div className={`w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 transition-all duration-300 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-blue-200`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <p className="text-slate-900 font-black text-2xl md:text-3xl leading-tight mb-1">{value}</p>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.1em]">{label}</p>
+                {/* Search Fields */}
+                <div className="flex flex-col lg:flex-row p-4 gap-4 bg-white">
+                  <div className="flex items-center gap-3 flex-1 px-5 py-4 bg-slate-50 hover:bg-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 rounded-2xl transition-all border border-slate-200 group/input">
+                    <MapPin className="w-5 h-5 text-blue-500 flex-shrink-0 group-focus-within/input:scale-110 transition-transform" />
+                    <input
+                      type="text"
+                      placeholder="Search locality, e.g. Sector 20 Panchkula…"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="flex-1 text-slate-800 placeholder-slate-400 text-base font-medium bg-transparent outline-none w-full"
+                    />
                   </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                    <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all border border-slate-200 w-full sm:w-48 relative focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 focus-within:bg-white">
+                      <Building2 className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                      <select
+                        value={propertyType}
+                        onChange={e => setPropertyType(e.target.value)}
+                        className="text-slate-800 w-full text-sm font-medium bg-transparent outline-none cursor-pointer appearance-none absolute inset-0 pl-12 pr-4 opacity-0 z-10"
+                      >
+                        <option>All Types</option>
+                        <option>Apartment</option>
+                        <option>Villa</option>
+                        <option>Plot</option>
+                        <option>Commercial</option>
+                      </select>
+                      <span className="text-slate-800 text-sm font-medium truncate flex-1 pointer-events-none">{propertyType}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all border border-slate-200 w-full sm:w-48 relative focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 focus-within:bg-white">
+                      <span className="text-slate-400 text-base font-bold flex-shrink-0">₹</span>
+                      <select
+                        value={budget}
+                        onChange={e => setBudget(e.target.value)}
+                        className="text-slate-800 w-full text-sm font-medium bg-transparent outline-none cursor-pointer appearance-none absolute inset-0 pl-12 pr-4 opacity-0 z-10"
+                      >
+                        <option>Any Budget</option>
+                        <option>Under 50L</option>
+                        <option>50L – 1Cr</option>
+                        <option>1Cr – 2Cr</option>
+                        <option>2Cr+</option>
+                      </select>
+                      <span className="text-slate-800 text-sm font-medium truncate flex-1 pointer-events-none">{budget}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handleSearch}
+                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 flex-shrink-0 shadow-xl shadow-blue-600/20 w-full lg:w-auto hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <Search className="w-5 h-5" />
+                    <span className="text-base">Search</span>
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Stats Strip with Hover Effects */}
+      <div className="relative z-10 border-y border-slate-100 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
+            {stats.map(({ icon: Icon, value, label, gradient, delay }, idx) => (
+              <div
+                key={label}
+                className="group relative"
+              >
+                <div className="flex flex-col items-center text-center p-2 rounded-2xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div className={`w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2 transition-all duration-300 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-blue-200`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <p className="text-slate-900 font-black text-xl md:text-2xl leading-tight mb-0.5">{value}</p>
+                  <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.1em]">{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Properties Section with Animated Cards */}
       <section className="pt-16 pb-8 bg-gradient-to-b from-white to-slate-50/50 relative">
@@ -457,14 +374,14 @@ function Home() {
             </button>
           </div>
 
-          <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-1000 ease-in-out gap-8"
-              style={{ transform: `translateX(-${carouselIndex * (100 / (window.innerWidth > 1024 ? 3 : window.innerWidth > 768 ? 2 : 1)) }%)` }}
+          <div className="relative overflow-hidden -mx-4 px-4">
+            <div
+              className={`flex transition-transform duration-1000 ease-in-out ${featuredProperties.length <= 3 ? 'lg:justify-center' : ''} ${featuredProperties.length <= 2 ? 'md:justify-center' : ''} ${featuredProperties.length === 1 ? 'justify-center' : ''}`}
+              style={{ transform: `translateX(-${carouselIndex * (100 / (typeof window !== 'undefined' && window.innerWidth > 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1))}%)` }}
             >
               {featuredProperties.map((property, index) => (
-                <div key={index} className="min-w-full md:min-w-[calc(50%-16px)] lg:min-w-[calc(33.333%-22px)] flex-shrink-0">
-                  <div className="relative">
+                <div key={index} className="min-w-full md:min-w-[50%] lg:min-w-[33.333333%] flex-shrink-0 px-4 pb-4">
+                  <div className="relative h-full">
                     {property.isPromoted && (
                       <div className="absolute top-4 left-4 z-10 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-200 flex items-center gap-1.5 animate-pulse">
                         <Zap className="w-3 h-3 fill-white" /> Featured Ad
@@ -477,17 +394,18 @@ function Home() {
             </div>
 
             {/* Carousel Indicators */}
-            <div className="flex justify-center gap-2 mt-10">
-              {Array.from({ length: Math.max(0, featuredProperties.length - 2) }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCarouselIndex(i)}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    carouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
-                  }`}
-                />
-              ))}
-            </div>
+            {featuredProperties.length > (typeof window !== 'undefined' && window.innerWidth > 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1) && (
+              <div className="flex justify-center gap-2 mt-10">
+                {Array.from({ length: Math.max(0, featuredProperties.length - (typeof window !== 'undefined' && window.innerWidth > 1024 ? 2 : typeof window !== 'undefined' && window.innerWidth > 768 ? 1 : 0)) }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCarouselIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${carouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
+                      }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -504,21 +422,22 @@ function Home() {
               <div className="w-8 h-[2px] bg-blue-500 rounded-full" />
             </div>
             <h3 className="text-3xl md:text-4xl font-black text-slate-900 mb-12 tracking-tight">Meet Our Top Agents</h3>
-            
+
             <div className="relative overflow-hidden max-w-[1200px] mx-auto px-4">
-              <div 
-                className="flex transition-transform duration-1000 ease-in-out gap-6 pt-6 pb-6"
-                style={{ transform: `translateX(-${agentCarouselIndex * (100 / (window.innerWidth > 1024 ? 4 : window.innerWidth > 768 ? 2 : 1)) }%)` }}
-              >
-                {topAgents.map((agent, i) => (
-                  <div key={agent._id} className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] flex-shrink-0 flex justify-center">
-                    <Link
+              <div className="-mx-3">
+                <div
+                  className={`flex transition-transform duration-1000 ease-in-out ${topAgents.length <= 4 ? 'lg:justify-center' : ''} ${topAgents.length <= 2 ? 'md:justify-center' : ''} ${topAgents.length === 1 ? 'justify-center' : ''}`}
+                  style={{ transform: `translateX(-${agentCarouselIndex * (100 / (typeof window !== 'undefined' && window.innerWidth > 1024 ? 4 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1))}%)` }}
+                >
+                  {topAgents.map((agent, i) => (
+                    <div key={agent._id} className="min-w-full md:min-w-[50%] lg:min-w-[25%] flex-shrink-0 flex justify-center px-3 py-6">
+                      <Link
                       to={`/agent/${agent.username || agent._id}`}
-                      className="group relative flex flex-col items-center w-full max-w-[240px] p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-2 transition-all duration-500 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/20"
+                      className="group relative flex flex-col items-center w-full max-w-[260px] p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-2 transition-all duration-500 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/20"
                     >
                       {/* Decorative Background Glow on Hover */}
                       <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 rounded-[2rem] transition-opacity duration-500" />
-                      
+
                       {/* Rank Badge */}
                       <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-1 z-10">
                         <Star className="w-3 h-3 fill-white" /> Top {i + 1}
@@ -563,21 +482,23 @@ function Home() {
                   </div>
                 ))}
               </div>
-
-              {/* Carousel Indicators */}
-              <div className="flex justify-center gap-2 mt-10">
-                {Array.from({ length: Math.max(0, topAgents.length - (window.innerWidth > 1024 ? 3 : window.innerWidth > 768 ? 1 : 0)) }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setAgentCarouselIndex(i)}
-                    className={`h-1.5 rounded-full transition-all duration-500 ${
-                      agentCarouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
-                    }`}
-                  />
-                ))}
               </div>
+              
+              {/* Carousel Indicators - only show if items overflow */}
+              {topAgents.length > (typeof window !== 'undefined' && window.innerWidth > 1024 ? 4 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1) && (
+                <div className="flex justify-center gap-2 mt-10">
+                  {Array.from({ length: Math.max(0, topAgents.length - (typeof window !== 'undefined' && window.innerWidth > 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth > 768 ? 1 : 0)) }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setAgentCarouselIndex(i)}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${agentCarouselIndex === i ? 'w-8 bg-blue-600' : 'w-2 bg-slate-200'
+                        }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            
+
             <div className="mt-14">
               <Link to="/agents" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-slate-900 text-white font-bold text-sm hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/30 transition-all group">
                 Explore Directory <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

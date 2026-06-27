@@ -16,16 +16,11 @@ const PostProperty = () => {
   const [user, setUser] = useState(null);
 
   // Upload/Camera States
-  const [showCameraModal, setShowCameraModal] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(null);
-  const [cameraStream, setCameraStream] = useState(null);
-  const [capturedImage, setCapturedImage] = useState(null);
   const [uploadingIndex, setUploadingIndex] = useState(null);
   const [showOptionsIndex, setShowOptionsIndex] = useState(null);
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -116,51 +111,7 @@ const PostProperty = () => {
     setFormData(prev => ({ ...prev, images: newImages.length ? newImages : [''] }));
   };
 
-  // --- Camera & Upload Logic ---
-  const startCamera = async (index) => {
-    try {
-      setActiveImageIndex(index);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1080 }, height: { ideal: 1080 } } 
-      });
-      setCameraStream(stream);
-      setShowCameraModal(true);
-      setShowOptionsIndex(null);
-      setCapturedImage(null);
-      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream; }, 100);
-    } catch (err) {
-      alert('Could not access camera');
-    }
-  };
-
-  const stopCamera = () => {
-    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
-    setCameraStream(null);
-    setShowCameraModal(false);
-  };
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (video && canvas) {
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      setCapturedImage(canvas.toDataURL('image/jpeg'));
-    }
-  };
-
-  const handleUploadCaptured = async () => {
-    if (!capturedImage) return;
-    const index = activeImageIndex;
-    stopCamera();
-    setUploadingIndex(index);
-    const res = await fetch(capturedImage);
-    const blob = await res.blob();
-    const file = new File([blob], `prop-${Date.now()}.jpg`, { type: "image/jpeg" });
-    await uploadFile(file, index);
-  };
+  // --- Camera & Upload Logic simplified natively ---
 
   const onFileSelect = async (e, index) => {
     const file = e.target.files[0];
@@ -377,11 +328,11 @@ const PostProperty = () => {
 
                        {showOptionsIndex === idx && (
                           <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-2 z-[50] animate-in slide-in-from-top-2">
-                             <button type="button" onClick={() => startCamera(idx)} className="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-2xl text-xs font-black text-slate-700">
+                             <button type="button" onClick={() => { setActiveImageIndex(idx); setShowOptionsIndex(null); cameraInputRef.current.click(); }} className="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-2xl text-xs font-black text-slate-700">
                                 <div className="p-2 bg-blue-100 rounded-xl text-blue-600"><Camera className="w-4 h-4" /></div>
                                 Take Photo
                              </button>
-                             <button type="button" onClick={() => { setActiveImageIndex(idx); fileInputRef.current.click(); }} className="w-full flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-2xl text-xs font-black text-slate-700">
+                             <button type="button" onClick={() => { setActiveImageIndex(idx); setShowOptionsIndex(null); fileInputRef.current.click(); }} className="w-full flex items-center gap-3 p-3 hover:bg-emerald-50 rounded-2xl text-xs font-black text-slate-700">
                                 <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600"><ImageIcon className="w-4 h-4" /></div>
                                 From Gallery
                              </button>
@@ -397,6 +348,7 @@ const PostProperty = () => {
                 ))}
               </div>
               <input type="file" ref={fileInputRef} onChange={(e) => onFileSelect(e, activeImageIndex)} accept="image/*" className="hidden" />
+              <input type="file" ref={cameraInputRef} onChange={(e) => onFileSelect(e, activeImageIndex)} accept="image/*" capture="environment" className="hidden" />
             </div>
 
             <button type="submit" disabled={formLoading} className="w-full py-6 rounded-[2.5rem] bg-slate-900 text-white font-black text-lg shadow-2xl hover:bg-blue-600 transition-all flex items-center justify-center gap-4">
@@ -406,39 +358,6 @@ const PostProperty = () => {
           </form>
         </div>
       </main>
-
-      {/* Shared Camera Modal */}
-      {showCameraModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-md" onClick={stopCamera}></div>
-          <div className="relative w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-xl font-black text-slate-900 flex items-center gap-2"><Camera className="w-6 h-6 text-blue-600" /> Take Photo</h3>
-              <button onClick={stopCamera} className="p-2 hover:bg-slate-100 rounded-2xl"><X className="w-6 h-6 text-slate-400" /></button>
-            </div>
-            <div className="relative aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
-              {!capturedImage ? (
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-              ) : (
-                <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-              )}
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-            <div className="p-8 flex flex-col items-center gap-4">
-              {!capturedImage ? (
-                <button onClick={capturePhoto} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center shadow-xl border-4 border-blue-50">
-                  <div className="w-14 h-14 bg-white rounded-full"></div>
-                </button>
-              ) : (
-                <div className="flex gap-4 w-full">
-                  <button onClick={() => setCapturedImage(null)} className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black flex items-center justify-center gap-2"><RefreshCw className="w-5 h-5" /> Retake</button>
-                  <button onClick={handleUploadCaptured} className="flex-1 py-4 rounded-2xl bg-blue-600 text-white font-black flex items-center justify-center gap-2"><CheckCircle2 className="w-5 h-5" /> Use This Photo</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       <Footer />
     </div>
