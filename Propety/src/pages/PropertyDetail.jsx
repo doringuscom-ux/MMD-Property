@@ -4,7 +4,7 @@ import {
   MapPin, BedDouble, Bath, Square, Calendar, ShieldCheck,
   Share2, Heart, Phone, Mail, MessageSquare, ChevronRight,
   CheckCircle2, Star, Clock, Map, Building2, User2, ArrowLeft,
-  Loader2, AlertCircle
+  Loader2, AlertCircle, Tag
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -208,25 +208,26 @@ const PropertyDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 relative pb-24 md:pb-0">
       <Navbar />
       <main className="pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumbs & Actions */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <Link to="/properties" className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition-colors group">
-              <div className="p-2 rounded-xl bg-white border border-slate-200 group-hover:bg-blue-50 group-hover:border-blue-100 transition-all">
+          <div className="flex items-center justify-between mb-6">
+            <Link to="/properties" className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition-colors group text-sm md:text-base">
+              <div className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-white border border-slate-200 group-hover:bg-blue-50 group-hover:border-blue-100 transition-all">
                 <ArrowLeft className="w-4 h-4" />
               </div>
-              Back to Properties
+              <span className="hidden sm:inline">Back to Properties</span>
+              <span className="sm:hidden">Back</span>
             </Link>
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm">
+            <div className="flex items-center gap-2 md:gap-3">
+              <button className="flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm text-sm md:text-base">
                 <Share2 className="w-4 h-4" /> Share
               </button>
               <button 
                 onClick={handleSave}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-sm font-bold ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl border transition-all shadow-sm font-bold text-sm md:text-base ${
                   isLiked 
                     ? 'bg-red-500 border-red-500 text-white' 
                     : 'bg-white border-slate-200 text-red-500 hover:bg-red-50'
@@ -240,25 +241,28 @@ const PropertyDetail = () => {
 
           {/* Property Header */}
           <div className="mb-8">
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="px-4 py-1.5 rounded-full bg-blue-600 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/20">{property.status}</span>
-                  <span className="px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-black uppercase tracking-wider">{property.type}</span>
-                  <div className="flex items-center gap-1.5 text-blue-600">
-                    <ShieldCheck className="w-5 h-5 fill-blue-50" />
-                    <span className="text-sm font-black uppercase tracking-widest">Verified</span>
-                  </div>
-                </div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{property.title}</h1>
-                <div className="flex items-center gap-2 text-slate-500 font-medium text-lg">
-                  <MapPin className="w-5 h-5 text-blue-600" />
-                  {property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}
+            <div className="space-y-5">
+              {/* Tags */}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-4 py-1.5 rounded-full bg-blue-600 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-600/20">{property.status}</span>
+                <span className="px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-black uppercase tracking-wider">{property.type}</span>
+                <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+                  <ShieldCheck className="w-4 h-4 fill-blue-600 text-white" />
+                  <span className="text-xs font-black uppercase tracking-widest">Verified</span>
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 min-w-[200px] text-center md:text-right">
-                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mb-1">Asking Price</p>
-                <h2 className="text-4xl md:text-5xl font-black text-blue-600">₹{property.price}</h2>
+
+              {/* Price, Title, Location */}
+              <div>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Asking Price</p>
+                <h2 className="text-4xl md:text-5xl font-black text-blue-600 tracking-tight mb-3">₹{property.price}</h2>
+                
+                <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight mb-2 leading-snug">{property.title}</h1>
+                
+                <div className="flex items-start gap-2 text-slate-500 font-medium text-base md:text-lg">
+                  <MapPin className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{property.location ? (property.city ? `${property.location}, ${property.city}` : property.location) : (property.city || '')}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -291,19 +295,19 @@ const PropertyDetail = () => {
               {/* Main Content Sections - Now stacked tightly under gallery */}
               <div className="space-y-8">
                 {/* Quick Specs */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex md:grid md:grid-cols-4 gap-2.5 md:gap-4 overflow-x-auto pb-2 md:pb-0" style={{ scrollbarWidth: 'none' }}>
                   {[
                     (['Apartment', 'Villa'].includes(property.type) && property.bhk) ? { icon: BedDouble, label: property.bhk + " BHK", sub: "Bedrooms" } : null,
                     (property.type !== 'Plot' && property.baths) ? { icon: Bath, label: property.baths + " Baths", sub: "Washrooms" } : null,
                     property.area ? { icon: Square, label: property.area, sub: "Build Area" } : null,
                     { icon: Clock, label: property.readyStatus || "Ready", sub: "Status" }
                   ].filter(Boolean).map((spec, index) => (
-                    <div key={index} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm shadow-slate-200/50 hover:shadow-xl hover:-translate-y-1 transition-all group">
-                      <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 w-fit mb-3 group-hover:scale-110 transition-transform">
-                        <spec.icon className="w-6 h-6" />
+                    <div key={index} className="flex-1 min-w-[90px] bg-white p-3 md:p-5 rounded-[1.25rem] md:rounded-3xl border border-slate-100 shadow-sm shadow-slate-200/50 hover:shadow-xl hover:-translate-y-1 transition-all group">
+                      <div className="p-2 md:p-3 rounded-xl md:rounded-2xl bg-blue-50 text-blue-600 w-fit mb-1.5 md:mb-3 group-hover:scale-110 transition-transform">
+                        <spec.icon className="w-4 h-4 md:w-6 md:h-6" />
                       </div>
-                      <p className="text-xl font-black text-slate-900">{spec.label}</p>
-                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{spec.sub}</p>
+                      <p className="text-sm md:text-xl font-black text-slate-900 leading-tight">{spec.label}</p>
+                      <p className="text-slate-400 text-[8px] md:text-xs font-bold uppercase tracking-widest mt-0.5">{spec.sub}</p>
                     </div>
                   ))}
                 </div>
@@ -371,16 +375,17 @@ const PropertyDetail = () => {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      {property.agent.id && (property.agent.role === 'Verified Agent' || property.agent.role === 'Administrator') && (
-                        <Link to={`/agent/${property.agent.username || property.agent.id}`} className="w-full py-3 mb-2 rounded-2xl bg-blue-50 text-blue-600 font-black shadow-sm hover:bg-blue-100 transition-all flex items-center justify-center gap-2 group/profile">
+                      {property.agent.username && (
+                        <Link to={`/agent/${property.agent.username}`} className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black shadow-xl shadow-slate-900/20 hover:bg-blue-600 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/profile">
+                           <User2 className="w-5 h-5" />
                            View Full Profile & Properties <ChevronRight className="w-4 h-4 group-hover/profile:translate-x-1 transition-transform" />
                         </Link>
                       )}
-                      <a href={`tel:${property.agent.phone}`} className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn block text-center">
+                      <a href={`tel:${property.agent.phone}`} className="hidden md:flex w-full py-4 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all items-center justify-center gap-3 group/btn text-center">
                         <Phone className="w-5 h-5 group-hover/btn:rotate-12 transition-transform inline" />
                         Call Now
                       </a>
-                      <a href={`https://wa.me/${property.agent.phone.replace(/\D/g,'')}?text=Hi, I am interested in your property: ${property.title}`} target="_blank" rel="noreferrer" className="w-full py-4 rounded-2xl bg-white border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group/btn block text-center">
+                      <a href={`https://wa.me/${property.agent.phone.replace(/\D/g,'')}?text=Hi, I am interested in your property: ${property.title}`} target="_blank" rel="noreferrer" className="hidden md:flex w-full py-4 rounded-2xl bg-white border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 active:scale-[0.98] transition-all items-center justify-center gap-3 group/btn text-center">
                         <MessageSquare className="w-5 h-5 group-hover/btn:-translate-y-1 transition-transform inline" />
                         WhatsApp Inquiry
                       </a>
@@ -461,6 +466,19 @@ const PropertyDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Mobile Sticky Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:hidden z-50 flex gap-3">
+        <a href={`tel:${property.agent.phone}`} className="flex-1 py-3.5 rounded-xl bg-white border-2 border-blue-100 text-blue-600 font-black hover:bg-blue-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+          <Phone className="w-5 h-5" />
+          Call
+        </a>
+        <a href={`https://wa.me/${property.agent.phone.replace(/\D/g,'')}?text=Hi, I am interested in your property: ${property.title}`} target="_blank" rel="noreferrer" className="flex-1 py-3.5 rounded-xl bg-blue-600 text-white font-black shadow-lg shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+          <MessageSquare className="w-5 h-5" />
+          WhatsApp
+        </a>
+      </div>
+
       <Footer />
     </div>
   );
