@@ -116,7 +116,7 @@ const AdminPropertyModal = ({
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Type</label>
                   <select name="propertyType" value={formData.propertyType} onChange={handleInputChange} className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-sm">
-                    {['Apartment', 'Villa', 'Plot', 'Office', 'Studio', 'Penthouse', 'Project', 'Commercial'].map(t => <option key={t} value={t}>{t}</option>)}
+                    {['Apartment', 'Villa', 'Plot', 'Office', 'Studio', 'Penthouse', 'Project', 'Commercial', 'Shop', 'Room'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">

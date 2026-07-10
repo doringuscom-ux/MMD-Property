@@ -56,6 +56,16 @@ const PropertyDetail = () => {
         }
 
         // Format data for the UI
+        const detailsObj = {
+          "Property ID": data.propertyId || data._id.substring(0, 8).toUpperCase(),
+        };
+        if (data.builtYear) detailsObj["Built Year"] = data.builtYear;
+        if (data.propertyType !== 'Plot' && data.furnishing) detailsObj["Furnishing"] = data.furnishing;
+        if (data.facing) detailsObj["Facing"] = data.facing;
+        if (['Apartment', 'Commercial', 'Shop', 'Office', 'Room'].includes(data.propertyType) && data.floor) {
+             detailsObj["Floor"] = data.floor;
+        }
+
         const formattedData = {
             id: data._id,
             title: data.title,
@@ -63,14 +73,13 @@ const PropertyDetail = () => {
             location: data.location,
             city: data.city,
             type: data.propertyType,
-            status: "For Sale",
-            area: `${data.area} sq.ft`,
+            status: data.status || "For Sale",
+            area: data.area ? `${data.area} sq.ft` : null,
             bhk: data.bedrooms,
             baths: data.bathrooms,
             description: data.description,
             images: data.images && data.images.length > 0 ? data.images : [
-              "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
-              "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
+              "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
             ],
             features: data.premiumFeatures ? data.premiumFeatures.split(',').map(f => f.trim()).filter(f => f !== '') : [],
             agent: {
@@ -82,13 +91,8 @@ const PropertyDetail = () => {
               email: data.postedBy?.email,
               image: data.postedBy?.avatar || "https://ui-avatars.com/api/?name=" + (data.postedBy?.name || "User") + "&background=0D8ABC&color=fff"
             },
-            details: {
-              "Property ID": data.propertyId || data._id.substring(0, 8).toUpperCase(),
-              "Built Year": data.builtYear || "2023",
-              "Furnishing": data.furnishing || "Semi-Furnished",
-              "Facing": data.facing || "North-East",
-              "Floor": data.floor || "12th of 15"
-            },
+            details: detailsObj,
+            readyStatus: data.readyStatus,
             mapLink: data.mapLink
         };
         
@@ -289,11 +293,11 @@ const PropertyDetail = () => {
                 {/* Quick Specs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { icon: BedDouble, label: property.bhk + " BHK", sub: "Bedrooms" },
-                    { icon: Bath, label: property.baths + " Baths", sub: "Washrooms" },
-                    { icon: Square, label: property.area, sub: "Build Area" },
-                    { icon: Clock, label: "Ready", sub: "Status" }
-                  ].map((spec, index) => (
+                    (['Apartment', 'Villa'].includes(property.type) && property.bhk) ? { icon: BedDouble, label: property.bhk + " BHK", sub: "Bedrooms" } : null,
+                    (property.type !== 'Plot' && property.baths) ? { icon: Bath, label: property.baths + " Baths", sub: "Washrooms" } : null,
+                    property.area ? { icon: Square, label: property.area, sub: "Build Area" } : null,
+                    { icon: Clock, label: property.readyStatus || "Ready", sub: "Status" }
+                  ].filter(Boolean).map((spec, index) => (
                     <div key={index} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm shadow-slate-200/50 hover:shadow-xl hover:-translate-y-1 transition-all group">
                       <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 w-fit mb-3 group-hover:scale-110 transition-transform">
                         <spec.icon className="w-6 h-6" />
