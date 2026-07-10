@@ -73,6 +73,13 @@ const PropertyCard = ({
       label: 'FOR SALE',
       pill: 'rounded-lg'
     },
+    'For Rent': {
+      color: 'from-emerald-600 to-emerald-500',
+      bg: 'bg-emerald-600',
+      icon: <Eye className="w-3.5 h-3.5" />,
+      label: 'FOR RENT',
+      pill: 'rounded-lg'
+    },
     'New Launch': {
       color: 'from-violet-600 to-violet-500',
       bg: 'bg-violet-600',
@@ -102,7 +109,15 @@ const PropertyCard = ({
       pill: 'rounded-lg'
     },
   };
-  const config = typeConfig[type] || typeConfig['Premium'];
+  
+  // Default config if category is not found in typeConfig
+  const config = typeConfig[type] || {
+      color: 'from-blue-600 to-blue-500',
+      bg: 'bg-blue-600',
+      icon: null,
+      label: type ? type.toUpperCase() : 'PREMIUM',
+      pill: 'rounded-lg'
+  };
 
 
 

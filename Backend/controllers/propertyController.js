@@ -165,10 +165,16 @@ export const createProperty = async (req, res) => {
             }
         }
 
-        // If a regular user posts, it stays unverified and pending
+        // If a regular user posts, they can save as Draft, otherwise it goes to Pending
         const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
         const isVerified = isAdmin;
-        const adminStatus = isAdmin ? (req.body.adminStatus || 'Published') : 'Pending';
+        
+        let adminStatus;
+        if (isAdmin) {
+            adminStatus = req.body.adminStatus || 'Published';
+        } else {
+            adminStatus = req.body.adminStatus === 'Draft' ? 'Draft' : 'Pending';
+        }
 
         const property = new Property({
             ...req.body,
@@ -179,8 +185,8 @@ export const createProperty = async (req, res) => {
 
         const createdProperty = await property.save();
 
-        // Create notification for admin if a regular user posts
-        if (!isAdmin) {
+        // Create notification for admin if a regular user posts (and it's not a draft)
+        if (!isAdmin && adminStatus !== 'Draft') {
             const msg = `New property listing added by ${req.user.name}: ${createdProperty.title}`;
             await Notification.create({
                 user: req.user._id,
@@ -238,9 +244,9 @@ export const updateProperty = async (req, res) => {
                 return res.status(403).json({ message: 'Not authorized to edit this property' });
             }
 
-            // If a regular user edits, it goes back to Pending status
+            // If a regular user edits, it goes back to Pending status (unless saving as Draft)
             if (!isAdmin) {
-                req.body.adminStatus = 'Pending';
+                req.body.adminStatus = req.body.adminStatus === 'Draft' ? 'Draft' : 'Pending';
                 req.body.isVerified = false;
             }
 
@@ -257,8 +263,8 @@ export const updateProperty = async (req, res) => {
 
             const updatedProperty = await property.save();
 
-            // Create notification for admin if a regular user updates
-            if (!isAdmin) {
+            // Create notification for admin if a regular user updates (and it's not a draft)
+            if (!isAdmin && updatedProperty.adminStatus !== 'Draft') {
                 const msg = `Property listing updated by ${req.user.name}: ${updatedProperty.title}`;
                 await Notification.create({
                     user: req.user._id,

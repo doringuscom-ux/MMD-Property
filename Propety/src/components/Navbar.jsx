@@ -4,7 +4,7 @@ import {
   Menu, X, Home, Search, Building2, MapPin, ChevronRight, 
   User, Users, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings 
 } from 'lucide-react';
-import logoImg from '../assets/NewLogo.png';
+import logoImg from '../assets/Logo.svg';
 import { BASE_URL } from '../api';
 
 const Navbar = ({ isSolid = false }) => {
@@ -66,11 +66,11 @@ const Navbar = ({ isSolid = false }) => {
           {/* Logo Section */}
           <div className="flex-shrink-0 flex items-center group cursor-pointer">
             <Link to="/" className="relative flex items-center gap-4">
-              <div className="p-2.5 rounded-2xl bg-white shadow-xl shadow-blue-500/10 group-hover:shadow-blue-500/20 transition-all duration-500 border border-slate-100">
+              <div className="relative group-hover:scale-105 transition-transform duration-500">
                 <img
                   src={logoImg}
                   alt="Logo"
-                  className="h-[46px] md:h-[54px] w-auto object-contain transform group-hover:scale-105 transition-transform duration-500"
+                  className={`h-14 md:h-16 lg:h-[72px] w-auto object-contain drop-shadow-md transition-all duration-300 ${!isTop ? 'brightness-0 contrast-200 opacity-80' : ''}`}
                 />
               </div>
 

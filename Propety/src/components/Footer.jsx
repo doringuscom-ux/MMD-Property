@@ -1,6 +1,6 @@
 import { Phone, Mail, MapPin, ChevronRight, User } from 'lucide-react';
 
-import logoImg from '../assets/NewLogo.png';
+import logoImg from '../assets/Logo.svg';
 
 const Footer = () => {
   return (
@@ -8,12 +8,17 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-white shadow-xl">
-                <img src={logoImg} alt="Logo" className="h-[46px] w-auto" />
+            <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-4 group cursor-pointer">
+              <img src={logoImg} alt="Logo" className="h-16 w-16 md:h-[72px] md:w-[72px] object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500" />
+              <div className="flex flex-col justify-center">
+                <span className="text-xl font-black font-heading leading-tight tracking-tight text-white whitespace-nowrap">
+                  Maa Mansa Property <span className="text-blue-500">.</span>
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 group-hover:text-blue-400 transition-colors leading-none mt-1">
+                  Panchkula • Mohali
+                </span>
               </div>
-              <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Property.</span>
             </div>
 
 

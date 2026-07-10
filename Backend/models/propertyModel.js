@@ -7,15 +7,15 @@ const propertySchema = mongoose.Schema({
     },
     title: {
         type: String,
-        required: true
+        required: function() { return this.adminStatus !== 'Draft'; }
     },
     description: {
         type: String,
-        required: true
+        required: function() { return this.adminStatus !== 'Draft'; }
     },
     price: {
         type: Number,
-        required: true
+        required: function() { return this.adminStatus !== 'Draft'; }
     },
     location: {
         type: String,
@@ -23,13 +23,13 @@ const propertySchema = mongoose.Schema({
     },
     city: {
         type: String,
-        required: true,
+        required: function() { return this.adminStatus !== 'Draft'; },
         enum: ['Chandigarh', 'Panchkula', 'Mohali', 'Zirakpur', 'Derabassi', 'Lalru', 'Kharar', 'New Chandigarh'],
         default: 'Chandigarh'
     },
     status: { 
         type: String, 
-        required: true, 
+        required: function() { return this.adminStatus !== 'Draft'; }, 
         enum: ['For Sale', 'For Rent', 'Commercial', 'New Launch', 'Premium', 'Sold', 'Rented'],
         default: 'For Sale'
     },
@@ -38,7 +38,7 @@ const propertySchema = mongoose.Schema({
     }],
     propertyType: {
         type: String,
-        required: true
+        required: function() { return this.adminStatus !== 'Draft'; }
     },
     bedrooms: Number,
     bathrooms: Number,
