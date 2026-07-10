@@ -205,22 +205,20 @@ function Home() {
             alt="Hero Background"
             className="w-full h-full object-cover object-center scale-105 animate-float-slow"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-900/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/30 to-slate-900/80" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center mt-10">
           {/* Hero Text */}
           <div className="text-center mb-10 animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold tracking-widest mb-6 uppercase backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5" /> Welcome to Maa Mansa Property
+            <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold tracking-widest mb-6 uppercase backdrop-blur-md shadow-lg">
+              <Sparkles className="w-4 h-4 text-blue-400" /> Welcome to Maa Mansa Property
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight mb-6 leading-tight">
-              Find Your Perfect <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
-                Dream Home
-              </span>
+            <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 tracking-tight drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+              Find Your Perfect <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Dream Home</span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto font-medium">
+            <p className="text-lg lg:text-xl text-slate-200 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
               Discover the best properties in Panchkula, Mohali, and Zirakpur with Tri-City's most trusted real estate agency.
             </p>
           </div>
@@ -230,9 +228,9 @@ function Home() {
             <div className="relative group">
               {/* Soft glow behind card */}
               <div className="absolute -inset-2 bg-white/20 rounded-[2rem] blur-xl transition duration-1000 opacity-50 group-hover:opacity-100" />
-              
+
               <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-                
+
                 {/* Tabs */}
                 <div className="flex border-b border-slate-100 overflow-x-auto no-scrollbar bg-slate-50/80">
                   {tabs.map(tab => (
@@ -251,15 +249,15 @@ function Home() {
                       )}
                     </button>
                   ))}
-                  
+
                   {/* Post Property Tab */}
                   <Link
                     to="/post-property"
                     className="ml-auto flex-shrink-0 px-6 py-4 flex items-center gap-2 text-emerald-600 hover:bg-emerald-50 transition-colors border-l border-slate-100 group/post bg-white"
                   >
-                     <PlusCircle className="w-4 h-4 group-hover/post:rotate-90 transition-transform" />
-                     <span className="text-sm font-bold whitespace-nowrap">Post Property</span>
-                     <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase">Free</span>
+                    <PlusCircle className="w-4 h-4 group-hover/post:rotate-90 transition-transform" />
+                    <span className="text-sm font-bold whitespace-nowrap">Post Property</span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-700 uppercase">Free</span>
                   </Link>
                 </div>
 
@@ -275,7 +273,7 @@ function Home() {
                       className="flex-1 text-slate-800 placeholder-slate-400 text-base font-medium bg-transparent outline-none w-full"
                     />
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                     <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all border border-slate-200 w-full sm:w-48 relative focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 focus-within:bg-white">
                       <Building2 className="w-5 h-5 text-slate-400 flex-shrink-0" />
@@ -293,7 +291,7 @@ function Home() {
                       <span className="text-slate-800 text-sm font-medium truncate flex-1 pointer-events-none">{propertyType}</span>
                       <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
                     </div>
-                    
+
                     <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all border border-slate-200 w-full sm:w-48 relative focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 focus-within:bg-white">
                       <span className="text-slate-400 text-base font-bold flex-shrink-0">₹</span>
                       <select
@@ -311,7 +309,7 @@ function Home() {
                       <ChevronRight className="w-4 h-4 text-slate-400 rotate-90" />
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={handleSearch}
                     className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 flex-shrink-0 shadow-xl shadow-blue-600/20 w-full lg:w-auto hover:-translate-y-0.5 active:translate-y-0"
@@ -410,6 +408,7 @@ function Home() {
         </div>
       </section>
 
+
       {/* Featured Agents Section */}
       <section className="pt-8 pb-16 bg-slate-50 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -432,58 +431,58 @@ function Home() {
                   {topAgents.map((agent, i) => (
                     <div key={agent._id} className="min-w-full md:min-w-[50%] lg:min-w-[25%] flex-shrink-0 flex justify-center px-3 py-6">
                       <Link
-                      to={`/agent/${agent.username || agent._id}`}
-                      className="group relative flex flex-col items-center w-full max-w-[260px] p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-2 transition-all duration-500 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/20"
-                    >
-                      {/* Decorative Background Glow on Hover */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 rounded-[2rem] transition-opacity duration-500" />
+                        to={`/agent/${agent.username || agent._id}`}
+                        className="group relative flex flex-col items-center w-full max-w-[260px] p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-blue-200 hover:-translate-y-2 transition-all duration-500 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-blue-500/20"
+                      >
+                        {/* Decorative Background Glow on Hover */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 rounded-[2rem] transition-opacity duration-500" />
 
-                      {/* Rank Badge */}
-                      <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-1 z-10">
-                        <Star className="w-3 h-3 fill-white" /> Top {i + 1}
-                      </div>
+                        {/* Rank Badge */}
+                        <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-1 z-10">
+                          <Star className="w-3 h-3 fill-white" /> Top {i + 1}
+                        </div>
 
-                      {/* Avatar */}
-                      <div className="relative mb-5 z-10">
-                        <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-500">
-                          <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border-[3px] border-white">
-                            {agent.avatar ? (
-                              <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-4xl font-black bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                {agent.name.charAt(0).toUpperCase()}
-                              </span>
+                        {/* Avatar */}
+                        <div className="relative mb-5 z-10">
+                          <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-500">
+                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border-[3px] border-white">
+                              {agent.avatar ? (
+                                <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-4xl font-black bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                  {agent.name.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Verification Tick */}
+                          <div className="absolute bottom-0 right-1 w-7 h-7 bg-emerald-500 rounded-full border-[3px] border-white flex items-center justify-center shadow-md">
+                            <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="text-center z-10 w-full">
+                          <p className="font-black text-slate-900 text-lg mb-3 group-hover:text-blue-600 transition-colors">{agent.name}</p>
+                          <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full group-hover:bg-white group-hover:text-blue-600 transition-colors border border-slate-100 group-hover:border-blue-100">
+                              <Building2 className="w-3.5 h-3.5" />
+                              {agent.propertyCount || 0} Active
+                            </div>
+                            {agent.propertiesSold > 0 && (
+                              <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100 group-hover:bg-purple-100 transition-colors">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                {agent.propertiesSold} Sold
+                              </div>
                             )}
                           </div>
                         </div>
-                        {/* Verification Tick */}
-                        <div className="absolute bottom-0 right-1 w-7 h-7 bg-emerald-500 rounded-full border-[3px] border-white flex items-center justify-center shadow-md">
-                          <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-                      {/* Info */}
-                      <div className="text-center z-10 w-full">
-                        <p className="font-black text-slate-900 text-lg mb-3 group-hover:text-blue-600 transition-colors">{agent.name}</p>
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-                          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full group-hover:bg-white group-hover:text-blue-600 transition-colors border border-slate-100 group-hover:border-blue-100">
-                            <Building2 className="w-3.5 h-3.5" />
-                            {agent.propertyCount || 0} Active
-                          </div>
-                          {agent.propertiesSold > 0 && (
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100 group-hover:bg-purple-100 transition-colors">
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              {agent.propertiesSold} Sold
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-              </div>
-              
               {/* Carousel Indicators - only show if items overflow */}
               {topAgents.length > (typeof window !== 'undefined' && window.innerWidth > 1024 ? 4 : typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1) && (
                 <div className="flex justify-center gap-2 mt-10">

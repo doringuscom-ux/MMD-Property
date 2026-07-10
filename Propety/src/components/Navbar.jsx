@@ -51,11 +51,17 @@ const Navbar = ({ isSolid = false }) => {
     { name: 'Contact', icon: Phone, href: '/contact' },
   ];
 
+  const isHomePage = location.pathname === '/';
+  const isTop = isHomePage && !(isSolid || scrolled);
+
   return (
-    <nav className={`fixed w-full z-[1000] transition-all duration-500 ease-in-out ${isSolid || scrolled ? 'py-2 bg-white shadow-lg' : 'py-2 bg-white/70 backdrop-blur-md border-b border-white/20'
+    <nav className={`fixed z-[1000] transition-all duration-500 ease-in-out ${
+      !isTop 
+        ? 'top-0 left-0 w-full bg-white shadow-lg shadow-slate-200/50 py-2.5 lg:py-3' 
+        : 'top-0 left-0 w-full bg-transparent py-4 lg:py-6'
       }`}>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo Section */}
           <div className="flex-shrink-0 flex items-center group cursor-pointer">
@@ -69,10 +75,10 @@ const Navbar = ({ isSolid = false }) => {
               </div>
 
               <div className="flex flex-col justify-center">
-                <span className="text-base min-[425px]:text-lg max-[1073px]:text-lg md:text-xl font-black text-slate-900 font-heading leading-tight tracking-tight">
-                  Maa Mansa Property <span className="text-blue-600">.</span>
+                <span className={`text-base min-[425px]:text-lg max-[1073px]:text-lg md:text-xl font-black font-heading leading-tight tracking-tight ${isTop ? 'text-white' : 'text-slate-900'}`}>
+                  Maa Mansa Property <span className="text-blue-500">.</span>
                 </span>
-                <span className="text-[9px] min-[425px]:text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 group-hover:text-blue-600/80 transition-colors leading-none">
+                <span className={`text-[9px] min-[425px]:text-[10px] uppercase tracking-[0.2em] font-bold transition-colors leading-none ${isTop ? 'text-blue-100 group-hover:text-white' : 'text-slate-400 group-hover:text-blue-600/80'}`}>
                   Panchkula • Mohali
                 </span>
               </div>
@@ -86,12 +92,16 @@ const Navbar = ({ isSolid = false }) => {
                 key={link.name}
                 to={link.href}
                 className={`group relative px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
-                  location.pathname === link.href ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'
+                  location.pathname === link.href 
+                    ? (isTop ? 'text-blue-400' : 'text-blue-600') 
+                    : (isTop ? 'text-slate-200 hover:text-white' : 'text-slate-600 hover:text-blue-600')
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <link.icon className={`w-4 h-4 transition-all duration-300 ${
-                    location.pathname === link.href ? 'opacity-100 text-blue-600' : 'opacity-40 group-hover:opacity-100 group-hover:text-blue-600'
+                    location.pathname === link.href 
+                      ? 'opacity-100' 
+                      : (isTop ? 'opacity-60 group-hover:opacity-100' : 'opacity-40 group-hover:opacity-100 group-hover:text-blue-600')
                   }`} />
                   <span>{link.name}</span>
                 </div>
@@ -116,8 +126,8 @@ const Navbar = ({ isSolid = false }) => {
                       )}
                     </div>
                     <div className="text-left hidden xl:block">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Welcome back</p>
-                      <p className="text-sm font-black text-slate-900 flex items-center gap-1">
+                      <p className={`text-[10px] font-bold uppercase tracking-tighter leading-none ${isTop ? 'text-blue-200' : 'text-slate-400'}`}>Welcome back</p>
+                      <p className={`text-sm font-black flex items-center gap-1 ${isTop ? 'text-white' : 'text-slate-900'}`}>
                         Hi, {user.name} <ChevronDown className={`w-3 h-3 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                       </p>
                     </div>
@@ -170,7 +180,11 @@ const Navbar = ({ isSolid = false }) => {
                   )}
                 </div>
               ) : (
-                <Link to="/login" className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-blue-600 text-blue-600 font-bold text-sm hover:bg-blue-600 hover:text-white transition-all active:scale-95">
+                <Link to="/login" className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 font-bold text-sm transition-all active:scale-95 ${
+                  isTop 
+                    ? 'border-white/80 text-white hover:bg-white hover:text-blue-600' 
+                    : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
+                }`}>
                   <User className="w-4 h-4" />
                   Login / Sign Up
                 </Link>
@@ -202,7 +216,11 @@ const Navbar = ({ isSolid = false }) => {
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="relative p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 hover:text-blue-600 transition-all"
+              className={`relative p-2.5 rounded-xl border transition-all ${
+                isTop 
+                  ? 'bg-white/10 border-white/20 text-white hover:bg-white/30' 
+                  : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-blue-600'
+              }`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

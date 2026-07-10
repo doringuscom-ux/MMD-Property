@@ -18,6 +18,7 @@ const PostProperty = () => {
   // Upload/Camera States
   const [uploadingIndex, setUploadingIndex] = useState(null);
   const [showOptionsIndex, setShowOptionsIndex] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(null);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
