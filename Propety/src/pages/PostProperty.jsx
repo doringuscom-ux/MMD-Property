@@ -7,6 +7,8 @@ import {
   Sparkles, Building, Calendar, CheckCircle2, AlertCircle, Edit3, Camera, RefreshCw, Map, Star
 } from 'lucide-react';
 import { BASE_URL } from '../api';
+import ImageCropperModal from '../components/ImageCropperModal';
+
 const PostProperty = () => {
   const { id } = useParams();
   const isEditMode = !!id;
@@ -19,6 +21,10 @@ const PostProperty = () => {
   const [uploadingIndex, setUploadingIndex] = useState(null);
   const [showOptionsIndex, setShowOptionsIndex] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(null);
+  
+  // Cropper states
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [cropTargetIndex, setCropTargetIndex] = useState(null);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -58,7 +64,12 @@ const PostProperty = () => {
     if (isEditMode) {
       const fetchProperty = async () => {
         try {
-          const response = await fetch(`${BASE_URL}/properties/${id}`);
+          const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+          const response = await fetch(`${BASE_URL}/properties/${id}`, {
+            headers: {
+              'Authorization': userInfo?.token ? `Bearer ${userInfo.token}` : ''
+            }
+          });
           if (!response.ok) throw new Error('Failed to fetch property');
           const data = await response.json();
           
@@ -123,17 +134,36 @@ const PostProperty = () => {
 
   // --- Camera & Upload Logic simplified natively ---
 
-  const onFileSelect = async (e, index) => {
+  const onFileSelect = (e, index) => {
     const file = e.target.files[0];
     if (!file) return;
     setShowOptionsIndex(null);
-    setUploadingIndex(index);
-    await uploadFile(file, index);
+    
+    // Read the file and pass to cropper
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      setCropImageSrc(reader.result?.toString() || '');
+      setCropTargetIndex(index);
+    });
+    reader.readAsDataURL(file);
+    
+    // Reset inputs so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
+
+  const handleCropComplete = async (croppedBlob) => {
+    setCropImageSrc(null); // Close modal
+    if (cropTargetIndex === null || !croppedBlob) return;
+    
+    setUploadingIndex(cropTargetIndex);
+    await uploadFile(croppedBlob, cropTargetIndex);
+    setCropTargetIndex(null);
   };
 
   const uploadFile = async (file, index) => {
     const uploadData = new FormData();
-    uploadData.append('image', file);
+    uploadData.append('image', file, 'cropped.jpeg');
 
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -495,6 +525,18 @@ const PostProperty = () => {
           </form>
         </div>
       </main>
+
+      {/* Image Cropper Modal */}
+      {cropImageSrc && (
+        <ImageCropperModal 
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setCropImageSrc(null);
+            setCropTargetIndex(null);
+          }}
+        />
+      )}
 
       <Footer />
     </div>
