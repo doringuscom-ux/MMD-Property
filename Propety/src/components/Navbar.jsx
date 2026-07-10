@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Menu, X, Home, Search, Building2, MapPin, ChevronRight, 
-  User, Users, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings 
+import {
+  Menu, X, Home, Search, Building2, MapPin, ChevronRight,
+  User, Users, LogOut, Heart, List, ChevronDown, Phone, MessageSquare, Settings
 } from 'lucide-react';
 import logoImg from '../assets/Logo.svg';
 import { BASE_URL } from '../api';
@@ -11,9 +11,9 @@ const Navbar = ({ isSolid = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  
+
   const location = useLocation();
 
   useEffect(() => {
@@ -55,9 +55,8 @@ const Navbar = ({ isSolid = false }) => {
   const isTop = isHomePage && !(isSolid || scrolled);
 
   return (
-    <nav className={`fixed z-[1000] transition-all duration-500 ease-in-out ${
-      !isTop 
-        ? 'top-0 left-0 w-full bg-white shadow-lg shadow-slate-200/50 py-2.5 lg:py-3' 
+    <nav className={`fixed z-[1000] transition-all duration-500 ease-in-out ${!isTop
+        ? 'top-0 left-0 w-full bg-white shadow-lg shadow-slate-200/50 py-2.5 lg:py-3'
         : 'top-0 left-0 w-full bg-transparent py-4 lg:py-6'
       }`}>
 
@@ -91,32 +90,29 @@ const Navbar = ({ isSolid = false }) => {
               <Link
                 key={link.name}
                 to={link.href}
-                className={`group relative px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
-                  location.pathname === link.href 
-                    ? (isTop ? 'text-blue-400' : 'text-blue-600') 
+                className={`group relative px-4 py-2 text-sm font-semibold transition-colors duration-300 ${location.pathname === link.href
+                    ? (isTop ? 'text-blue-400' : 'text-blue-600')
                     : (isTop ? 'text-slate-200 hover:text-white' : 'text-slate-600 hover:text-blue-600')
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
-                  <link.icon className={`w-4 h-4 transition-all duration-300 ${
-                    location.pathname === link.href 
-                      ? 'opacity-100' 
+                  <link.icon className={`w-4 h-4 transition-all duration-300 ${location.pathname === link.href
+                      ? 'opacity-100'
                       : (isTop ? 'opacity-60 group-hover:opacity-100' : 'opacity-40 group-hover:opacity-100 group-hover:text-blue-600')
-                  }`} />
+                    }`} />
                   <span>{link.name}</span>
                 </div>
-                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-blue-600 to-emerald-400 transform transition-transform duration-300 ease-out ${
-                  location.pathname === link.href ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                }`}></span>
+                <span className={`absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-blue-600 to-emerald-400 transform transition-transform duration-300 ease-out ${location.pathname === link.href ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                  }`}></span>
               </Link>
             ))}
 
             <div className="ml-6 flex items-center space-x-6">
               {user ? (
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-3 px-3 py-1.5 rounded-2xl hover:bg-slate-50 transition-all group"
+                    className={`flex items-center gap-3 px-3 py-1.5 rounded-2xl transition-all group ${isTop ? 'hover:bg-white/10' : 'hover:bg-slate-50'}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200 overflow-hidden">
                       {user.avatar ? (
@@ -166,7 +162,7 @@ const Navbar = ({ isSolid = false }) => {
                           Manage Profile
                         </Link>
                         <div className="h-px bg-slate-50 my-2 mx-4" />
-                        <button 
+                        <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all font-bold text-sm text-left group"
                         >
@@ -180,11 +176,10 @@ const Navbar = ({ isSolid = false }) => {
                   )}
                 </div>
               ) : (
-                <Link to="/login" className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 font-bold text-sm transition-all active:scale-95 ${
-                  isTop 
-                    ? 'border-white/80 text-white hover:bg-white hover:text-blue-600' 
+                <Link to="/login" className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 font-bold text-sm transition-all active:scale-95 ${isTop
+                    ? 'border-white/80 text-white hover:bg-white hover:text-blue-600'
                     : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
-                }`}>
+                  }`}>
                   <User className="w-4 h-4" />
                   Login / Sign Up
                 </Link>
@@ -216,11 +211,10 @@ const Navbar = ({ isSolid = false }) => {
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`relative p-2.5 rounded-xl border transition-all ${
-                isTop 
-                  ? 'bg-white/10 border-white/20 text-white hover:bg-white/30' 
+              className={`relative p-2.5 rounded-xl border transition-all ${isTop
+                  ? 'bg-white/10 border-white/20 text-white hover:bg-white/30'
                   : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-blue-600'
-              }`}
+                }`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -229,23 +223,20 @@ const Navbar = ({ isSolid = false }) => {
       </div>
 
       {/* Mobile Menu Sidebar */}
-      <div 
-        className={`fixed inset-0 z-[100] lg:hidden transition-all duration-500 ${
-          isOpen ? 'visible' : 'invisible'
-        }`}
+      <div
+        className={`fixed inset-0 z-[100] lg:hidden transition-all duration-500 ${isOpen ? 'visible' : 'invisible'
+          }`}
       >
         {/* Glass Overlay */}
-        <div 
-          className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${
-            isOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+        <div
+          className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'
+            }`}
           onClick={() => setIsOpen(false)}
         />
-        
-        <div 
-          className={`absolute top-0 right-0 h-full w-[85%] max-w-sm bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-            isOpen ? 'translate-x-0' : 'translate-x-full'
-          } flex flex-col`}
+
+        <div
+          className={`absolute top-0 right-0 h-full w-[85%] max-w-sm bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isOpen ? 'translate-x-0' : 'translate-x-full'
+            } flex flex-col`}
         >
           {/* Sidebar Header */}
           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
@@ -255,7 +246,7 @@ const Navbar = ({ isSolid = false }) => {
               </div>
               <span className="text-2xl font-black font-heading tracking-tight">Maa Mansa Property.</span>
             </div>
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               className="p-3 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
             >
@@ -288,21 +279,18 @@ const Navbar = ({ isSolid = false }) => {
                     key={link.name}
                     to={link.href}
                     onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group ${
-                      location.pathname === link.href 
-                        ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' 
+                    className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group ${location.pathname === link.href
+                        ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30'
                         : 'bg-slate-50 text-slate-600 hover:bg-blue-50'
-                    }`}
+                      }`}
                   >
-                    <div className={`p-2 rounded-xl ${
-                      location.pathname === link.href ? 'bg-white/20' : 'bg-white shadow-sm'
-                    }`}>
+                    <div className={`p-2 rounded-xl ${location.pathname === link.href ? 'bg-white/20' : 'bg-white shadow-sm'
+                      }`}>
                       <link.icon className="w-5 h-5" />
                     </div>
                     <span className="font-bold">{link.name}</span>
-                    <ChevronRight className={`ml-auto w-4 h-4 transition-all ${
-                      location.pathname === link.href ? 'opacity-100' : 'opacity-0 -translate-x-2'
-                    }`} />
+                    <ChevronRight className={`ml-auto w-4 h-4 transition-all ${location.pathname === link.href ? 'opacity-100' : 'opacity-0 -translate-x-2'
+                      }`} />
                   </Link>
                 ))}
               </div>
@@ -349,7 +337,7 @@ const Navbar = ({ isSolid = false }) => {
                     </div>
                     <span className="font-bold">Manage Profile</span>
                   </Link>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 transition-all group"
                   >

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Menu, Clock, CheckCircle2, Trash2, X, Plus, Edit3, MessageSquare } from 'lucide-react';
+import { Search, Bell, Menu, Clock, CheckCircle2, Trash2, X, Plus, Edit3, MessageSquare, User } from 'lucide-react';
 import { BASE_URL } from '../../api';
 
 const formatTimeAgo = (date) => {
@@ -16,6 +16,7 @@ const formatTimeAgo = (date) => {
 const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
 
   const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
@@ -51,6 +52,10 @@ const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick
   };
 
   useEffect(() => {
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (userInfoStr) {
+      setUser(JSON.parse(userInfoStr));
+    }
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
     return () => clearInterval(interval);
@@ -229,8 +234,12 @@ const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick
             </div>
           )}
 
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-100 cursor-pointer">
-            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" alt="Admin" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-100 cursor-pointer flex items-center justify-center bg-slate-50 text-slate-400">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user?.name || "Admin"} className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-5 h-5" />
+            )}
           </div>
         </div>
       </div>

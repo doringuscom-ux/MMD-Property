@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   MapPin, BedDouble, Bath, Square, Calendar, ShieldCheck,
   Share2, Heart, Phone, Mail, MessageSquare, ChevronRight,
   CheckCircle2, Star, Clock, Map, Building2, User2, ArrowLeft,
-  Loader2, AlertCircle, Tag
+  Loader2, AlertCircle, Tag, ChevronLeft, X
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EMICalculator from '../components/EMICalculator';
+import PropertyCard from '../components/PropertyCard';
 import { BASE_URL } from '../api';
 
 const PropertyDetail = () => {
@@ -17,6 +18,9 @@ const PropertyDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [relatedProperties, setRelatedProperties] = useState([]);
+  const thumbContainerRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [enquiryData, setEnquiryData] = useState({
     name: '',
@@ -97,6 +101,57 @@ const PropertyDetail = () => {
         };
         
         setProperty(formattedData);
+        
+        // Fetch related properties (by City to ensure more matches)
+        try {
+          const cityParam = data.city ? `&city=${data.city}` : '';
+          const relRes = await fetch(`${BASE_URL}/properties?pageSize=10${cityParam}`);
+          const relData = await relRes.json();
+          let propertiesList = relData.properties || [];
+          
+          let filteredProps = propertiesList.filter(p => p._id !== data._id);
+
+          // If we have less than 3 properties in the same city, fetch generic properties to pad
+          if (filteredProps.length < 3) {
+            const fallbackRes = await fetch(`${BASE_URL}/properties?pageSize=10`);
+            const fallbackData = await fallbackRes.json();
+            const fallbackProps = fallbackData.properties || [];
+            
+            // Add fallback properties that aren't already in the list and aren't the current property
+            for (const fp of fallbackProps) {
+              if (fp._id !== data._id && !filteredProps.find(p => p._id === fp._id)) {
+                filteredProps.push(fp);
+              }
+              if (filteredProps.length >= 3) break;
+            }
+          }
+
+          if (filteredProps.length > 0) {
+            const formattedRelated = filteredProps
+              .slice(0, 3)
+              .map(p => ({
+                id: p._id,
+                title: p.title,
+                price: p.price ? (p.price >= 1e7 ? (p.price / 1e7).toFixed(2) + ' Cr' : p.price >= 1e5 ? (p.price / 1e5).toFixed(2) + ' L' : p.price.toLocaleString('en-IN')) : 'Price on Request',
+                location: p.location,
+                beds: p.bedrooms?.toString() || '0',
+                baths: p.bathrooms?.toString() || '0',
+                area: p.area?.toString() || '0',
+                type: p.status || p.propertyType,
+                rating: "4.8",
+                verified: p.isVerified,
+                city: p.city,
+                adminStatus: p.adminStatus,
+                isLiked: false,
+                image: p.images?.[0] || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+                images: p.images
+              }));
+            setRelatedProperties(formattedRelated);
+          }
+        } catch (e) {
+          console.error('Error fetching related properties:', e);
+        }
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching property:', error);
@@ -128,6 +183,13 @@ const PropertyDetail = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const scrollThumbnails = (dir) => {
+    if (thumbContainerRef.current) {
+      const scrollAmount = 300;
+      thumbContainerRef.current.scrollBy({ left: dir === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
     }
   };
 
@@ -271,24 +333,36 @@ const PropertyDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
             <div className="lg:col-span-8 space-y-6">
               <div className="space-y-4">
-                <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200 group">
+                <div 
+                  className="relative aspect-[16/9] rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200 group cursor-pointer"
+                  onClick={() => setIsImageModalOpen(true)}
+                >
                   <img src={property.images[activeImage]} alt={property.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   <div className="absolute bottom-6 right-6 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-black text-sm">
                     {activeImage + 1} / {property.images.length} Photos
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-3">
-                  {property.images.map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveImage(index)}
-                      className={`relative aspect-[4/3] rounded-2xl overflow-hidden border-4 transition-all ${activeImage === index ? 'border-blue-600 scale-95 shadow-lg shadow-blue-600/20' : 'border-white hover:border-blue-200 hover:scale-105'
-                        }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+                <div className="relative group/thumbs">
+                  <button onClick={() => scrollThumbnails('left')} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center justify-center text-slate-700 hover:bg-white hover:text-blue-600 z-10 opacity-0 group-hover/thumbs:opacity-100 transition-opacity">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => scrollThumbnails('right')} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center justify-center text-slate-700 hover:bg-white hover:text-blue-600 z-10 opacity-0 group-hover/thumbs:opacity-100 transition-opacity">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                  
+                  <div ref={thumbContainerRef} className="flex overflow-x-auto gap-3 snap-x scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+                    {property.images.map((img, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setActiveImage(index)}
+                        className={`relative w-24 min-w-[96px] md:w-32 md:min-w-[128px] aspect-[4/3] rounded-2xl overflow-hidden border-4 transition-all snap-start shrink-0 ${activeImage === index ? 'border-blue-600 scale-95 shadow-lg shadow-blue-600/20' : 'border-white hover:border-blue-200 hover:scale-105'
+                          }`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -465,10 +539,35 @@ const PropertyDetail = () => {
 
           </div>
         </div>
+
+        {/* Related Properties */}
+        {relatedProperties.length > 0 && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-12 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-2">Similar Properties</h2>
+                <p className="text-slate-500 font-medium">You might also be interested in these</p>
+              </div>
+              <Link to="/properties" className="hidden sm:flex items-center gap-2 text-blue-600 font-bold hover:text-blue-700 transition-colors">
+                View All <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {relatedProperties.map(prop => (
+                <PropertyCard key={prop.id} {...prop} viewMode="grid" />
+              ))}
+            </div>
+            
+            <Link to="/properties" className="sm:hidden mt-6 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-blue-50 text-blue-600 font-bold hover:bg-blue-100 transition-colors">
+              View All Properties <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </main>
 
       {/* Mobile Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:hidden z-50 flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:hidden z-40 flex gap-3">
         <a href={`tel:${property.agent.phone}`} className="flex-1 py-3.5 rounded-xl bg-white border-2 border-blue-100 text-blue-600 font-black hover:bg-blue-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
           <Phone className="w-5 h-5" />
           Call
@@ -478,6 +577,45 @@ const PropertyDetail = () => {
           WhatsApp
         </a>
       </div>
+
+      {/* Full Screen Image Modal */}
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-sm flex flex-col">
+          {/* Top Header for Close Button */}
+          <div className="w-full flex justify-end p-4 md:p-6 pb-0 mt-4 md:mt-0">
+            <button 
+              onClick={() => setIsImageModalOpen(false)} 
+              className="w-10 h-10 md:w-12 md:h-12 bg-white text-slate-900 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] z-[99999]"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="flex-1 flex justify-center items-center p-4 sm:p-8 min-h-0">
+            <img 
+              src={property.images[activeImage]} 
+              alt={property.title} 
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+          
+          <div className="w-full p-4 md:p-6 bg-black/40 border-t border-white/5">
+            <div className="flex gap-3 overflow-x-auto snap-x mx-auto max-w-4xl" style={{ scrollbarWidth: 'none' }}>
+              {property.images.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImage(index)}
+                  className={`relative w-16 min-w-[64px] md:w-20 md:min-w-[80px] aspect-square rounded-lg md:rounded-xl overflow-hidden border-2 transition-all snap-start shrink-0 ${
+                    activeImage === index ? 'border-white scale-105 shadow-lg shadow-white/20 opacity-100' : 'border-transparent opacity-40 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
