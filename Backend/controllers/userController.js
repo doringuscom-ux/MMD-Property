@@ -41,6 +41,7 @@ export const authUser = async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
+            createdAt: user.createdAt,
             token: token
         });
     } else {
@@ -150,6 +151,7 @@ export const registerUser = async (req, res) => {
             phone: user.phone,
             username: user.username,
             role: user.role,
+            createdAt: user.createdAt,
             token: generateToken(user._id)
         });
     } else {
@@ -171,7 +173,8 @@ export const getUserProfile = async (req, res) => {
             role: user.role,
             avatar: user.avatar,
             experience: user.experience,
-            agentRequestStatus: user.agentRequestStatus
+            agentRequestStatus: user.agentRequestStatus,
+            createdAt: user.createdAt
         });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -540,10 +543,26 @@ export const toggleWishlist = async (req, res) => {
         if (index === -1) {
             user.wishlist.push(propertyId);
             await user.save();
+
+            // Increment favoriteCount on property
+            const property = await Property.findById(propertyId);
+            if (property) {
+                property.favoriteCount = (property.favoriteCount || 0) + 1;
+                await property.save();
+            }
+
             res.json({ message: 'Added to wishlist', wishlist: user.wishlist });
         } else {
             user.wishlist.splice(index, 1);
             await user.save();
+
+            // Decrement favoriteCount on property
+            const property = await Property.findById(propertyId);
+            if (property) {
+                property.favoriteCount = Math.max(0, (property.favoriteCount || 0) - 1);
+                await property.save();
+            }
+
             res.json({ message: 'Removed from wishlist', wishlist: user.wishlist });
         }
     } catch (error) {

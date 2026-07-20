@@ -30,6 +30,9 @@ export const createEnquiry = async (req, res) => {
         const propData = await Property.findById(property);
         if (propData) {
           propertyIdStr = propData.propertyId || propData._id.toString().substring(0, 8).toUpperCase();
+          // Increment enquiry count
+          propData.enquiryCount = (propData.enquiryCount || 0) + 1;
+          await propData.save();
         }
       }
 

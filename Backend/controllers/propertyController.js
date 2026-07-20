@@ -1,7 +1,7 @@
 import Property from '../models/propertyModel.js';
 import Notification from '../models/notificationModel.js';
 import User from '../models/userModel.js';
-import { sendNotification } from '../utils/emailService.js';
+import { sendNotification, sendUserNotification } from '../utils/emailService.js';
 
 // @desc    Fetch all properties
 // @route   GET /api/properties
@@ -121,6 +121,12 @@ export const getPropertyById = async (req, res) => {
                 return res.status(403).json({ message: 'This property is pending approval and can only be viewed by the owner or admin' });
             }
             
+            // Increment views if not owner and not admin
+            if (!isAdmin && !isOwner) {
+                property.views = (property.views || 0) + 1;
+                await property.save();
+            }
+
             const propObj = property.toObject();
             if (!propObj.showPosterContact) {
                 const adminUser = await User.findOne({ role: 'admin' }).select('name email role phone avatar');
@@ -253,6 +259,10 @@ export const updateProperty = async (req, res) => {
             const updateData = { ...req.body };
             delete updateData.postedBy; // Prevent overwriting original owner
 
+            // Check if status is transitioning to Published
+            const wasPublished = property.adminStatus === 'Published';
+            const isNowPublished = updateData.adminStatus === 'Published';
+
             Object.assign(property, updateData);
             property.updatedBy = req.user._id;
 
@@ -262,6 +272,34 @@ export const updateProperty = async (req, res) => {
             }
 
             const updatedProperty = await property.save();
+
+            // Notify user if newly published
+            if (isAdmin && !wasPublished && isNowPublished && updatedProperty.postedBy) {
+                const owner = await User.findById(updatedProperty.postedBy);
+                if (owner) {
+                    const msg = `Congratulations! Your property "${updatedProperty.title}" has been verified and published by the Admin.`;
+                    await Notification.create({
+                        recipient: owner._id,
+                        property: updatedProperty._id,
+                        message: msg,
+                        type: 'PropertyPublished'
+                    });
+
+                    if (owner.email) {
+                        const subject = `Your Property is Live: ${updatedProperty.title}`;
+                        const htmlContent = `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                                <h2 style="color: #2563eb;">Congratulations! Your Property is Live</h2>
+                                <p>Hello ${owner.name},</p>
+                                <p>Your property listing for <strong>${updatedProperty.title}</strong> has been verified by the administrator and is now live on Maa Mansa Property!</p>
+                                <p>Buyers can now discover your listing and contact you.</p>
+                                <p>Thank you for using our platform.</p>
+                            </div>
+                        `;
+                        sendUserNotification(owner.email, subject, htmlContent);
+                    }
+                }
+            }
 
             // Create notification for admin if a regular user updates (and it's not a draft)
             if (!isAdmin && updatedProperty.adminStatus !== 'Draft') {
@@ -373,6 +411,69 @@ export const updatePropertyStatusQuick = async (req, res) => {
         }
 
         property.status = status;
+        property.updatedBy = req.user._id;
+
+        const updatedProperty = await property.save();
+        res.json(updatedProperty);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Request map location from property owner
+// @route   POST /api/properties/:id/request-location
+// @access  Private (Admin/Sub-Admin)
+export const requestLocationFromUser = async (req, res) => {
+    try {
+        const property = await Property.findById(req.params.id);
+        
+        if (!property) {
+            return res.status(404).json({ message: 'Property not found' });
+        }
+
+        if (property.mapLink) {
+            return res.status(400).json({ message: 'Property already has a map link' });
+        }
+
+        if (!property.postedBy) {
+            return res.status(400).json({ message: 'Property does not have an owner to request from' });
+        }
+
+        // Create Notification for the user
+        await Notification.create({
+            recipient: property.postedBy,
+            property: property._id,
+            message: `Admin has requested you to add a Google Maps location for your property: "${property.title}". Click here to add it.`,
+            type: 'LocationRequested'
+        });
+
+        res.json({ message: 'Location request sent to owner' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update only the map link of a property
+// @route   PUT /api/properties/:id/map-link
+// @access  Private (Owner/Admin)
+export const updateMapLink = async (req, res) => {
+    try {
+        const { mapLink } = req.body;
+        const property = await Property.findById(req.params.id);
+
+        if (!property) {
+            return res.status(404).json({ message: 'Property not found' });
+        }
+
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'sub-admin';
+        const isOwner = property.postedBy && property.postedBy.toString() === req.user._id.toString();
+
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ message: 'Not authorized to update this property' });
+        }
+
+        property.mapLink = mapLink;
+        // Don't reset adminStatus or isVerified here, as it's just a map link update!
         property.updatedBy = req.user._id;
 
         const updatedProperty = await property.save();

@@ -102,6 +102,18 @@ const propertySchema = mongoose.Schema({
     showPosterContact: {
         type: Boolean,
         default: false
+    },
+    views: {
+        type: Number,
+        default: 0
+    },
+    enquiryCount: {
+        type: Number,
+        default: 0
+    },
+    favoriteCount: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

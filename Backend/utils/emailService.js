@@ -67,3 +67,24 @@ export const sendNotification = async (subject, htmlContent) => {
         return false;
     }
 };
+
+export const sendUserNotification = async (email, subject, htmlContent) => {
+    try {
+        const response = await axios.post(GOOGLE_SCRIPT_URL, null, {
+            params: {
+                to: email,
+                subject: subject,
+                message: htmlContent
+            }
+        });
+
+        if (response.data && response.data.success) {
+            console.log(`User Notification sent successfully to ${email}`);
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('User Notification Error:', error.message);
+        return false;
+    }
+};

@@ -8,7 +8,9 @@ import {
     deleteProperty,
     bulkUpdateProperties,
     bulkDeleteProperties,
-    updatePropertyStatusQuick
+    updatePropertyStatusQuick,
+    requestLocationFromUser,
+    updateMapLink
 } from '../controllers/propertyController.js';
 
 import { protect, admin, subAdmin, optionalProtect } from '../middleware/authMiddleware.js';
@@ -26,5 +28,7 @@ router.route('/:id')
     .delete(protect, deleteProperty);
 
 router.route('/:id/status').put(protect, updatePropertyStatusQuick);
+router.route('/:id/request-location').post(protect, subAdmin, requestLocationFromUser);
+router.route('/:id/map-link').put(protect, updateMapLink);
 
 export default router;

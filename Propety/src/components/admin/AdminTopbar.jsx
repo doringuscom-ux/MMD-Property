@@ -13,7 +13,7 @@ const formatTimeAgo = (date) => {
   return new Date(date).toLocaleDateString();
 };
 
-const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick }) => {
+const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick, setSidebarOpen }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [user, setUser] = useState(null);
@@ -123,7 +123,10 @@ const AdminTopbar = ({ activeTab, searchTerm, setSearchTerm, onNotificationClick
   return (
     <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-[100]">
       <div className="flex items-center gap-4">
-        <button className="lg:hidden p-2 rounded-xl bg-slate-50 text-slate-500">
+        <button 
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden p-2 rounded-xl bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+        >
           <Menu className="w-6 h-6" />
         </button>
         <h2 className="text-xl font-black text-slate-900">{activeTab}</h2>

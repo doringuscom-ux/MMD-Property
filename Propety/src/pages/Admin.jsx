@@ -28,6 +28,7 @@ const formatPrice = (price) => {
 const Admin = () => {
   // --- Global Admin State ---
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
@@ -497,8 +498,8 @@ const Admin = () => {
   // ----------------------------------------------------------------------
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
-      {/* Sidebar - Desktop */}
-      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Sidebar - Desktop & Mobile */}
+      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <AdminTopbar 
@@ -506,6 +507,7 @@ const Admin = () => {
           searchTerm={searchTerm} 
           setSearchTerm={setSearchTerm} 
           onNotificationClick={handleNotificationAction}
+          setSidebarOpen={setIsSidebarOpen}
         />
 
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC]">
@@ -530,6 +532,8 @@ const Admin = () => {
                   property={selectedProperty} 
                   onBack={() => setSelectedProperty(null)} 
                   formatPrice={formatPrice}
+                  onEdit={openEditModal}
+                  onDelete={confirmDelete}
                 />
               ) : (
                 <div className="p-8 space-y-8 animate-fade-in">

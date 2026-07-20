@@ -6,6 +6,11 @@ const notificationSchema = mongoose.Schema({
         ref: 'User',
         required: false // Optional for guest enquiries
     },
+    recipient: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false // If null, it's an admin notification
+    },
     property: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Property',
@@ -22,7 +27,7 @@ const notificationSchema = mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['PropertyAdded', 'PropertyUpdated', 'EnquiryAdded'],
+        enum: ['PropertyAdded', 'PropertyUpdated', 'EnquiryAdded', 'PropertyPublished', 'LocationRequested'],
         default: 'PropertyAdded'
     },
     isRead: {

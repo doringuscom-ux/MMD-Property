@@ -1,6 +1,6 @@
-import { LayoutDashboard, Building2, Plus, LayoutGrid, MapPin, Users, UserCircle, MessageSquare, Calendar, Star, FileText, Newspaper, Settings, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Plus, LayoutGrid, MapPin, Users, UserCircle, MessageSquare, Calendar, Star, FileText, Newspaper, Settings, BarChart3, LogOut, X } from 'lucide-react';
 
-const AdminSidebar = ({ activeTab, setActiveTab }) => {
+const AdminSidebar = ({ activeTab, setActiveTab, isOpen, setIsOpen }) => {
   const menuItems = [
     { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'Properties', icon: Building2, label: 'Properties' },
@@ -18,13 +18,33 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
   };
 
   return (
-    <aside className="w-64 bg-[#0F172A] text-slate-400 flex flex-col h-screen sticky top-0 shrink-0">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-          <Building2 className="w-6 h-6" />
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-[110] lg:hidden backdrop-blur-sm"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside className={`
+        fixed lg:sticky top-0 left-0 z-[120] h-screen w-64 bg-[#0F172A] text-slate-400 flex flex-col shrink-0 transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shrink-0">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <span className="text-white font-black text-xl tracking-tight leading-tight">Maa Mansa Property</span>
+          </div>
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
-        <span className="text-white font-black text-xl tracking-tight leading-tight">Maa Mansa Property</span>
-      </div>
 
       <div className="px-4 py-2 mb-6">
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
@@ -74,7 +94,8 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
       `}</style>
-    </aside>
+      </aside>
+    </>
   );
 };
 
